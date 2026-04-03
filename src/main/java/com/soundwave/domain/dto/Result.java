@@ -1,10 +1,15 @@
 package com.soundwave.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Result<T> {
     private final T value;
     private final Error error;
 
-    private Result(T value, Error error) {
+    // Needed for caching to be able to deserialize
+    @JsonCreator
+    private Result(@JsonProperty("value") T value, @JsonProperty("error") Error error) {
         this.value = value;
         this.error = error;
     }
@@ -22,10 +27,10 @@ public class Result<T> {
     }
 
     public static <T> Result<T> success(T value) {
-        return new Result<>( value, null);
+        return new Result<>(value, null);
     }
 
     public static <T> Result<T> failure(Error error) {
-        return new Result<>( null, error);
+        return new Result<>(null, error);
     }
 }

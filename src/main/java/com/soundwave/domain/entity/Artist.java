@@ -46,6 +46,9 @@ public class Artist extends BaseEntity {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Artist name cannot be blank");
         }
+        if (name.strip().length() > 255) {
+            throw new IllegalArgumentException("Artist name cannot exceed 255 characters");
+        }
         this.name = name.strip();
     }
 

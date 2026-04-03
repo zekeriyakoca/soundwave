@@ -1,4 +1,4 @@
-package com.soundwave.domain.repository;
+package com.soundwave.infrastructure.persistence.repository;
 
 import com.soundwave.domain.entity.Artist;
 import org.springframework.data.jpa.repository.JpaRepository;
