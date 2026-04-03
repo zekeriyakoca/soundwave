@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: soundwave
+
+  profiles:
+    active: dev
