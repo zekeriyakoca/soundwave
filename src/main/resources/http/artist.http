@@ -1,49 +1,30 @@
-### Create Artist
-POST http://localhost:8080/api/v1/artists
+@baseUrl = http://localhost:8080/api/v1
+@artistId = 0f9554fc-cc87-414b-89df-907de7a157ef
+
+### Create artist
+POST {{baseUrl}}/artists
 Content-Type: application/json
 
 {
   "name": "Fleetwood Mac",
-  "bio": "British-American rock band formed in 1967"
+  "bio": "British-American rock band formed in London in 1967"
 }
 
-### Create Artist - minimal
-POST http://localhost:8080/api/v1/artists
-Content-Type: application/json
+> {%
+client.global.set("artistId", response.body.id);
+%}
 
-{
-  "name": "Pink Floyd"
-}
+### Get artist
+GET {{baseUrl}}/artists/{{artistId}}
 
-### Get Artist
-GET http://localhost:8080/api/v1/artists/{{artistId}}
+### List artists
+GET {{baseUrl}}/artists?page=0&size=20&sort=name
 
-### List Artists
-GET http://localhost:8080/api/v1/artists?page=0&size=20&sort=name
-
-### Update Artist
-PUT http://localhost:8080/api/v1/artists/{{artistId}}
+### Update artist
+PUT {{baseUrl}}/artists/{{artistId}}
 Content-Type: application/json
 
 {
   "name": "Fleetwood Mac",
-  "bio": "Updated bio - British-American rock band formed in London in 1967"
-}
-
-### Update Artist - not found
-PUT http://localhost:8080/api/v1/artists/00000000-0000-0000-0000-000000000000
-Content-Type: application/json
-
-{
-  "name": "Ghost",
-  "bio": "Should return 404"
-}
-
-### Create Artist - validation error
-POST http://localhost:8080/api/v1/artists
-Content-Type: application/json
-
-{
-  "name": "",
-  "bio": "Should fail"
+  "bio": "Updated artist bio for event and cache invalidation flow"
 }

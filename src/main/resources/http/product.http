@@ -1,0 +1,110 @@
+@baseUrl = http://localhost:8080/api/v1
+@artistId = 00000000-0000-0000-0000-000000000000
+@productId = 00000000-0000-0000-0000-000000000000
+@track1Id = 00000000-0000-0000-0000-000000000000
+@track2Id = 00000000-0000-0000-0000-000000000000
+
+### Create artist for product flow
+POST {{baseUrl}}/artists
+Content-Type: application/json
+
+{
+  "name": "Fleetwood Mac",
+  "bio": "British-American rock band formed in London in 1967"
+}
+
+> {%
+client.global.set("artistId", response.body.id);
+%}
+
+### Create product as draft
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "title": "Rumours",
+  "artistId": "{{artistId}}",
+  "upc": "123456789012",
+  "releaseDate": "1977-02-04",
+  "genre": "ROCK",
+  "price": {
+    "amount": 9.99,
+    "currency": "EUR"
+  }
+}
+
+> {%
+client.global.set("productId", response.body.id);
+%}
+
+### Get product
+GET {{baseUrl}}/products/{{productId}}
+
+### Add first track
+POST {{baseUrl}}/products/{{productId}}/tracks
+Content-Type: application/json
+
+{
+  "title": "Second Hand News",
+  "durationMs": 163000,
+  "trackNumber": 1,
+  "isrc": "USWB19900001"
+}
+
+> {%
+client.global.set("track1Id", response.body.tracks[0].id);
+%}
+
+### Add second track
+POST {{baseUrl}}/products/{{productId}}/tracks
+Content-Type: application/json
+
+{
+  "title": "Dreams",
+  "durationMs": 254000,
+  "trackNumber": 2,
+  "isrc": "USWB19900002"
+}
+
+> {%
+client.global.set("track1Id", response.body.tracks[0].id);
+client.global.set("track2Id", response.body.tracks[1].id);
+%}
+
+### Publish product
+POST {{baseUrl}}/products/{{productId}}/publish
+
+### Update product metadata
+PUT {{baseUrl}}/products/{{productId}}
+Content-Type: application/json
+
+{
+  "title": "Rumours (Remastered)",
+  "upc": "123456789012",
+  "releaseDate": "1977-02-04",
+  "genre": "ROCK",
+  "price": {
+    "amount": 12.99,
+    "currency": "EUR"
+  }
+}
+
+### Reorder tracks
+PUT {{baseUrl}}/products/{{productId}}/tracks/order
+Content-Type: application/json
+
+{
+  "trackOrder": [
+    "{{track2Id}}",
+    "{{track1Id}}"
+  ]
+}
+
+### Remove one track
+DELETE {{baseUrl}}/products/{{productId}}/tracks/{{track2Id}}
+
+### Take down product
+POST {{baseUrl}}/products/{{productId}}/takedown
+
+### List products
+GET {{baseUrl}}/products?page=0&size=20&sort=title

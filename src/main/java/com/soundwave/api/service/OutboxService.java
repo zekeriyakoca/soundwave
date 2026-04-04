@@ -1,7 +1,7 @@
 package com.soundwave.api.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.soundwave.domain.dto.ArtistUpdatedPayload;
 import com.soundwave.domain.dto.MoneyPayload;
 import com.soundwave.domain.dto.ProductPayload;
@@ -34,17 +34,17 @@ public class OutboxService {
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void saveProductPublished(Product product) {
-        save(PRODUCT_AGGREGATE, product.getId(), PRODUCT_PUBLISHED_EVENT, toProductSnapshot(product));
+        save(PRODUCT_AGGREGATE, product.getId(), PRODUCT_PUBLISHED_EVENT, toProductPayload(product));
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void saveProductTakenDown(Product product) {
-        save(PRODUCT_AGGREGATE, product.getId(), PRODUCT_TAKEN_DOWN_EVENT, toProductSnapshot(product));
+        save(PRODUCT_AGGREGATE, product.getId(), PRODUCT_TAKEN_DOWN_EVENT, toProductPayload(product));
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void saveProductMetadataUpdated(Product product) {
-        save(PRODUCT_AGGREGATE, product.getId(), PRODUCT_METADATA_UPDATED_EVENT, toProductSnapshot(product));
+        save(PRODUCT_AGGREGATE, product.getId(), PRODUCT_METADATA_UPDATED_EVENT, toProductPayload(product));
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -90,12 +90,12 @@ public class OutboxService {
     private String writeJson(Object payload) {
         try {
             return objectMapper.writeValueAsString(payload);
-        } catch (JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             throw new IllegalStateException("Could not serialize outbox payload", ex);
         }
     }
 
-    private ProductPayload toProductSnapshot(Product product) {
+    private ProductPayload toProductPayload(Product product) {
         return new ProductPayload(
                 product.getId(),
                 product.getTitle(),
