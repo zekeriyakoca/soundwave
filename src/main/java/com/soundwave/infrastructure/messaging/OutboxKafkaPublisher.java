@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.soundwave.domain.entity.OutboxEvent;
 import com.soundwave.infrastructure.persistence.repository.OutboxEventRepository;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.errors.SerializationException;
@@ -18,6 +21,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Component
@@ -31,7 +35,16 @@ public class OutboxKafkaPublisher {
     private final OutboxEventRepository outboxEventRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
+    private final MeterRegistry meterRegistry;
     private final AtomicBoolean flushing = new AtomicBoolean(false);
+    private final AtomicLong pendingEvents = new AtomicLong(0);
+
+    @PostConstruct
+    void registerMetrics() {
+        Gauge.builder("outbox.events.pending", pendingEvents, AtomicLong::get)
+                .description("Number of pending outbox events")
+                .register(meterRegistry);
+    }
 
     @Async("outboxExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -49,9 +62,11 @@ public class OutboxKafkaPublisher {
             return;
         }
         try {
+            refreshPendingMetric();
             var batch = outboxEventRepository.findPending(PageRequest.ofSize(BATCH_SIZE));
             publishAll(batch);
         } finally {
+            refreshPendingMetric();
             flushing.set(false);
         }
     }
@@ -64,6 +79,7 @@ public class OutboxKafkaPublisher {
                 kafkaTemplate.send(topic, event.getAggregateId().toString(), envelope).get();
                 event.markPublished();
                 outboxEventRepository.save(event);
+                meterRegistry.counter("outbox.events.published").increment();
                 log.atInfo()
                         .addKeyValue("eventId", event.getId())
                         .addKeyValue("eventType", event.getEventType())
@@ -73,6 +89,7 @@ public class OutboxKafkaPublisher {
                 if (isNonRetryable(ex)) {
                     event.markFailed(ex.getMessage());
                     outboxEventRepository.save(event);
+                    meterRegistry.counter("outbox.events.failed").increment();
                     log.atError()
                             .setCause(ex)
                             .addKeyValue("eventId", event.getId())
@@ -88,6 +105,7 @@ public class OutboxKafkaPublisher {
                 break;
             }
         }
+        refreshPendingMetric();
     }
 
     private boolean isNonRetryable(Exception ex) {
@@ -124,5 +142,9 @@ public class OutboxKafkaPublisher {
             case "Artist" -> ARTIST_TOPIC;
             default -> throw new IllegalArgumentException("Unknown aggregate type: " + event.getAggregateType());
         };
+    }
+
+    private void refreshPendingMetric() {
+        pendingEvents.set(outboxEventRepository.countByPublishedFalseAndFailedFalse());
     }
 }

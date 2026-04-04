@@ -37,6 +37,7 @@ dependencies {
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8")
 	implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 	implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
+	implementation("io.micrometer:micrometer-registry-prometheus")
 
 	// Testing
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
