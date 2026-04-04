@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="soundwave"/>
+    <springProperty scope="context" name="activeProfile" source="spring.profiles.active" defaultValue="default"/>
+
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"service":"${appName}","environment":"${activeProfile}"}</customFields>
+            <includeMdc>true</includeMdc>
+            <includeKeyValuePairs>true</includeKeyValuePairs>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="JSON_CONSOLE"/>
+    </root>
+</configuration>

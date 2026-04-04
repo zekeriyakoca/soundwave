@@ -15,7 +15,7 @@ import java.util.UUID;
 @Table(name = "tracks")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Track {
+public class Track extends VersionedEntity {
 
     @Id
     @Column(columnDefinition = "CHAR(36)")

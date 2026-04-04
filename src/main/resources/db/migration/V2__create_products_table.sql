@@ -8,6 +8,7 @@ CREATE TABLE products (
     status         VARCHAR(20)   NOT NULL DEFAULT 'DRAFT',
     price_amount   DECIMAL(10,2),
     price_currency VARCHAR(3)    DEFAULT 'EUR',
+    version        BIGINT        NOT NULL DEFAULT 0,
     created_at     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 

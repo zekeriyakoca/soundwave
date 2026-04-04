@@ -5,6 +5,7 @@ CREATE TABLE tracks (
     duration_ms   INT          NOT NULL,
     track_number  INT          NOT NULL,
     isrc          VARCHAR(12),
+    version       BIGINT       NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_track_product FOREIGN KEY (product_id)
         REFERENCES products(id) ON DELETE CASCADE,

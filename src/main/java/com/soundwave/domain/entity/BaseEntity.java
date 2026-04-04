@@ -13,7 +13,7 @@ import java.time.Instant;
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-public abstract class BaseEntity {
+public abstract class BaseEntity extends VersionedEntity {
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

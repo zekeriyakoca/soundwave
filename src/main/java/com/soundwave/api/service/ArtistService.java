@@ -10,6 +10,7 @@ import com.soundwave.domain.dto.Error;
 import com.soundwave.domain.dto.Result;
 import com.soundwave.domain.entity.Artist;
 import com.soundwave.infrastructure.persistence.repository.ArtistRepository;
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ArtistService {
 
@@ -29,6 +31,7 @@ public class ArtistService {
     public Result<ArtistDto> createArtist(CreateArtistRequest request) {
         var artist = Artist.create(request.name(), request.bio());
         var saved = artistRepository.save(artist);
+        log.info("Created artist {}", saved.getId());
         return Result.success(DtoMapper.toDto(saved));
     }
 
@@ -63,6 +66,7 @@ public class ArtistService {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Artist not found"));
         }
         artist.get().updateProfile(request.name(), request.bio());
+        log.info("Updated artist {}", artist.get().getId());
         return Result.success(DtoMapper.toDto(artist.get()));
     }
 

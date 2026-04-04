@@ -15,6 +15,7 @@ import com.soundwave.domain.entity.Money;
 import com.soundwave.domain.entity.Product;
 import com.soundwave.infrastructure.persistence.repository.ArtistRepository;
 import com.soundwave.infrastructure.persistence.repository.ProductRepository;
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ProductService {
 
@@ -71,6 +73,7 @@ public class ProductService {
         );
 
         var saved = productRepository.save(product);
+        log.info("Created product {} for artist {}", saved.getId(), saved.getArtist().getId());
         return Result.success(DtoMapper.toDto(saved));
     }
 
@@ -88,6 +91,7 @@ public class ProductService {
                 request.genre(),
                 toMoney(request.price())
         );
+        log.info("Updated product {}", product.get().getId());
         return Result.success(DtoMapper.toDto(product.get()));
     }
 
@@ -99,6 +103,7 @@ public class ProductService {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
         }
         product.get().publish();
+        log.info("Published product {}", product.get().getId());
         return Result.success(DtoMapper.toDto(product.get()));
     }
 
@@ -110,6 +115,7 @@ public class ProductService {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
         }
         product.get().takeDown();
+        log.info("Took down product {}", product.get().getId());
         return Result.success(DtoMapper.toDto(product.get()));
     }
 
@@ -126,6 +132,7 @@ public class ProductService {
                 request.trackNumber(),
                 request.isrc()
         );
+        log.info("Added a track to product {}", product.get().getId());
         return Result.success(DtoMapper.toDto(product.get()));
     }
 
@@ -137,6 +144,7 @@ public class ProductService {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
         }
         product.get().removeTrack(trackId);
+        log.info("Removed track {} from product {}", trackId, productId);
         return Result.success(DtoMapper.toDto(product.get()));
     }
 
@@ -148,6 +156,7 @@ public class ProductService {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
         }
         product.get().reorderTracks(request.trackOrder());
+        log.info("Updated track order for product {}", productId);
         return Result.success(DtoMapper.toDto(product.get()));
     }
 
