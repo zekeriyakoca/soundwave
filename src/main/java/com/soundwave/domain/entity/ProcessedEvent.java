@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.UUID;
 
 @Entity
 @Table(name = "processed_events")
@@ -22,8 +21,8 @@ import java.util.UUID;
 public class ProcessedEvent {
 
     @Id
-    @Column(name = "event_id", columnDefinition = "CHAR(36)")
-    private UUID eventId;
+    @Column(name = "event_id", length = 36)
+    private String eventId;
 
     @Id
     @Column(name = "consumer_group", length = 100)
@@ -32,21 +31,24 @@ public class ProcessedEvent {
     @Column(name = "processed_at", nullable = false)
     private Instant processedAt;
 
-    private ProcessedEvent(UUID eventId, String consumerGroup) {
-        this.eventId = Objects.requireNonNull(eventId, "Event id cannot be null");
+    private ProcessedEvent(String eventId, String consumerGroup) {
+        if (eventId == null || eventId.isBlank()) {
+            throw new IllegalArgumentException("Event id cannot be blank");
+        }
         if (consumerGroup == null || consumerGroup.isBlank()) {
             throw new IllegalArgumentException("Consumer group cannot be blank");
         }
+        this.eventId = eventId.strip();
         this.consumerGroup = consumerGroup.strip();
         this.processedAt = Instant.now();
     }
 
-    public static ProcessedEvent create(UUID eventId, String consumerGroup) {
+    public static ProcessedEvent create(String eventId, String consumerGroup) {
         return new ProcessedEvent(eventId, consumerGroup);
     }
 
     public static class ProcessedEventId implements Serializable {
-        private UUID eventId;
+        private String eventId;
         private String consumerGroup;
 
         protected ProcessedEventId() {}

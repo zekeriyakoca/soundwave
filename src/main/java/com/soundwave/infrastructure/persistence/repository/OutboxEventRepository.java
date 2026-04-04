@@ -1,16 +1,16 @@
 package com.soundwave.infrastructure.persistence.repository;
 
 import com.soundwave.domain.entity.OutboxEvent;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
 import java.util.List;
 
 @Repository
 public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> {
 
-    List<OutboxEvent> findAllByPublishedFalseOrderByCreatedAtAscIdAsc();
-
-    List<OutboxEvent> findAllByPublishedFalseAndCreatedAtBeforeOrderByCreatedAtAscIdAsc(Instant before);
+    @Query("SELECT e FROM OutboxEvent e WHERE e.published = false AND e.failed = false ORDER BY e.createdAt, e.id")
+    List<OutboxEvent> findPending(Pageable limit);
 }

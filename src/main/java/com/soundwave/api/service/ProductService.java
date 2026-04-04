@@ -131,6 +131,12 @@ public class ProductService {
         return Result.success(DtoMapper.toDto(existingProduct));
     }
 
+    @CacheEvict(value = "products", key = "#id")
+    @Transactional
+    public Result<ProductDto> deleteProduct(UUID id) {
+        return takeDownProduct(id);
+    }
+
     @CacheEvict(value = "products", key = "#productId")
     @Transactional
     public Result<ProductDto> addTrack(UUID productId, AddTrackRequest request) {

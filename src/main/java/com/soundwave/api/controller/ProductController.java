@@ -54,6 +54,11 @@ public class ProductController {
         return ResultResponseMapper.toResponse(productService.takeDownProduct(id));
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable UUID id) {
+        return ResultResponseMapper.toResponse(productService.deleteProduct(id));
+    }
+
     @PostMapping("/{id}/tracks")
     public ResponseEntity<?> addTrack(@PathVariable UUID id, @Valid @RequestBody AddTrackRequest request) {
         return ResultResponseMapper.toResponse(productService.addTrack(id, request), HttpStatus.CREATED);

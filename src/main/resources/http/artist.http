@@ -1,7 +1,7 @@
 @baseUrl = http://localhost:8080/api/v1
-@artistId = 0f9554fc-cc87-414b-89df-907de7a157ef
+@artistId = 00000000-0000-0000-0000-000000000000
 
-### Create artist
+### 1) Create artist
 POST {{baseUrl}}/artists
 Content-Type: application/json
 
@@ -14,13 +14,13 @@ Content-Type: application/json
 client.global.set("artistId", response.body.id);
 %}
 
-### Get artist
+### 2) Get artist
 GET {{baseUrl}}/artists/{{artistId}}
 
-### List artists
+### 3) List artists
 GET {{baseUrl}}/artists?page=0&size=20&sort=name
 
-### Update artist
+### 4) Update artist
 PUT {{baseUrl}}/artists/{{artistId}}
 Content-Type: application/json
 

@@ -1,8 +1,0 @@
-CREATE TABLE artists (
-    id          CHAR(36)     PRIMARY KEY,
-    name        VARCHAR(255) NOT NULL,
-    bio         TEXT,
-    version     BIGINT       NOT NULL DEFAULT 0,
-    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);

@@ -111,13 +111,20 @@ public class Product extends BaseEntity {
     }
 
     public void removeTrack(UUID trackId) {
+        var track = tracks.stream()
+                .filter(t -> t.getId().equals(trackId))
+                .findFirst()
+                .orElse(null);
+
+        if (track == null) {
+            throw new IllegalArgumentException("Track not found: " + trackId);
+        }
+
         if (isPublished() && tracks.size() <= 1) {
             throw new IllegalStateException("Published product must have at least one track");
         }
-        var removed = tracks.removeIf(t -> t.getId().equals(trackId));
-        if (!removed) {
-            throw new IllegalArgumentException("Track not found: " + trackId);
-        }
+
+        tracks.remove(track);
     }
 
     public void reorderTracks(List<UUID> trackOrder) {

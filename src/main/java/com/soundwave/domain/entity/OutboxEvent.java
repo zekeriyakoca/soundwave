@@ -45,6 +45,12 @@ public class OutboxEvent extends VersionedEntity {
     @Column(name = "published_at")
     private Instant publishedAt;
 
+    @Column(nullable = false)
+    private boolean failed;
+
+    @Column(name = "failure_reason")
+    private String failureReason;
+
     private OutboxEvent(
             String aggregateType,
             java.util.UUID aggregateId,
@@ -75,7 +81,15 @@ public class OutboxEvent extends VersionedEntity {
 
     public void markPublished() {
         this.published = true;
+        this.failed = false;
+        this.failureReason = null;
         this.publishedAt = Instant.now();
+    }
+
+    public void markFailed(String reason) {
+        this.published = false;
+        this.failed = true;
+        this.failureReason = reason;
     }
 
     private static String requireNonBlank(String value, String message) {

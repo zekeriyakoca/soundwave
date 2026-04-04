@@ -4,7 +4,7 @@
 @track1Id = 00000000-0000-0000-0000-000000000000
 @track2Id = 00000000-0000-0000-0000-000000000000
 
-### Create artist for product flow
+### 1) Create artist (prerequisite)
 POST {{baseUrl}}/artists
 Content-Type: application/json
 
@@ -17,7 +17,7 @@ Content-Type: application/json
 client.global.set("artistId", response.body.id);
 %}
 
-### Create product as draft
+### 2) Create product as draft
 POST {{baseUrl}}/products
 Content-Type: application/json
 
@@ -37,10 +37,7 @@ Content-Type: application/json
 client.global.set("productId", response.body.id);
 %}
 
-### Get product
-GET {{baseUrl}}/products/{{productId}}
-
-### Add first track
+### 3) Add first track
 POST {{baseUrl}}/products/{{productId}}/tracks
 Content-Type: application/json
 
@@ -55,7 +52,7 @@ Content-Type: application/json
 client.global.set("track1Id", response.body.tracks[0].id);
 %}
 
-### Add second track
+### 4) Add second track
 POST {{baseUrl}}/products/{{productId}}/tracks
 Content-Type: application/json
 
@@ -71,10 +68,10 @@ client.global.set("track1Id", response.body.tracks[0].id);
 client.global.set("track2Id", response.body.tracks[1].id);
 %}
 
-### Publish product
+### 5) Publish product
 POST {{baseUrl}}/products/{{productId}}/publish
 
-### Update product metadata
+### 6) Update product metadata
 PUT {{baseUrl}}/products/{{productId}}
 Content-Type: application/json
 
@@ -89,7 +86,7 @@ Content-Type: application/json
   }
 }
 
-### Reorder tracks
+### 7) Reorder tracks
 PUT {{baseUrl}}/products/{{productId}}/tracks/order
 Content-Type: application/json
 
@@ -100,11 +97,17 @@ Content-Type: application/json
   ]
 }
 
-### Remove one track
+### 8) Get product
+GET {{baseUrl}}/products/{{productId}}
+
+### 9) List products
+GET {{baseUrl}}/products?page=0&size=20&sort=title
+
+### 10) Remove one track
 DELETE {{baseUrl}}/products/{{productId}}/tracks/{{track2Id}}
 
-### Take down product
-POST {{baseUrl}}/products/{{productId}}/takedown
+### 11) Soft delete product (maps to takeDown)
+DELETE {{baseUrl}}/products/{{productId}}
 
-### List products
-GET {{baseUrl}}/products?page=0&size=20&sort=title
+### Optional: direct takedown endpoint
+POST {{baseUrl}}/products/{{productId}}/takedown
