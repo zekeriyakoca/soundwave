@@ -26,6 +26,7 @@ import java.util.UUID;
 public class ArtistService {
 
     private final ArtistRepository artistRepository;
+    private final OutboxService outboxService;
 
     @Transactional
     public Result<ArtistDto> createArtist(CreateArtistRequest request) {
@@ -65,9 +66,11 @@ public class ArtistService {
         if (artist.isEmpty()) {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Artist not found"));
         }
-        artist.get().updateProfile(request.name(), request.bio());
-        log.info("Updated artist {}", artist.get().getId());
-        return Result.success(DtoMapper.toDto(artist.get()));
+        var existingArtist = artist.get();
+        existingArtist.updateProfile(request.name(), request.bio());
+        outboxService.saveArtistUpdated(existingArtist);
+        log.info("Updated artist {}", existingArtist.getId());
+        return Result.success(DtoMapper.toDto(existingArtist));
     }
 
 }

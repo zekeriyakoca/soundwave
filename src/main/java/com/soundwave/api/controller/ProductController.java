@@ -36,12 +36,12 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<?> create(@Valid @RequestBody CreateProductRequest request) {
-        return ResultResponseMapper.toResponse(productService.createProduct(request), HttpStatus.CREATED);
+        return ResultResponseMapper.toResponse(productService.createProductAsDraft(request), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable UUID id, @Valid @RequestBody UpdateProductRequest request) {
-        return ResultResponseMapper.toResponse(productService.updateProduct(id, request));
+        return ResultResponseMapper.toResponse(productService.updateProductMetadata(id, request));
     }
 
     @PostMapping("/{id}/publish")

@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 @Slf4j
-@Component
+@Component("correlationContextFilter")
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class RequestContextFilter extends OncePerRequestFilter {
 

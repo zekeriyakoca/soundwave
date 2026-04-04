@@ -32,6 +32,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ArtistRepository artistRepository;
+    private final OutboxService outboxService;
 
     @Cacheable(value = "products", key = "#id")
     @Transactional(readOnly = true)
@@ -57,7 +58,7 @@ public class ProductService {
     }
 
     @Transactional
-    public Result<ProductDto> createProduct(CreateProductRequest request) {
+    public Result<ProductDto> createProductAsDraft(CreateProductRequest request) {
         var artist = artistRepository.findById(request.artistId());
         if (artist.isEmpty()) {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Artist not found"));
@@ -79,20 +80,24 @@ public class ProductService {
 
     @CacheEvict(value = "products", key = "#id")
     @Transactional
-    public Result<ProductDto> updateProduct(UUID id, UpdateProductRequest request) {
+    public Result<ProductDto> updateProductMetadata(UUID id, UpdateProductRequest request) {
         var product = productRepository.findById(id);
         if (product.isEmpty()) {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
         }
-        product.get().updateMetadata(
+        var existingProduct = product.get();
+        existingProduct.updateMetadata(
                 request.title(),
                 request.upc(),
                 request.releaseDate(),
                 request.genre(),
                 toMoney(request.price())
         );
-        log.info("Updated product {}", product.get().getId());
-        return Result.success(DtoMapper.toDto(product.get()));
+        if (existingProduct.isPublished()) {
+            outboxService.saveProductMetadataUpdated(existingProduct);
+        }
+        log.info("Updated product metadata {}", existingProduct.getId());
+        return Result.success(DtoMapper.toDto(existingProduct));
     }
 
     @CacheEvict(value = "products", key = "#id")
@@ -102,9 +107,12 @@ public class ProductService {
         if (product.isEmpty()) {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
         }
-        product.get().publish();
-        log.info("Published product {}", product.get().getId());
-        return Result.success(DtoMapper.toDto(product.get()));
+        var existingProduct = product.get();
+        existingProduct.publish();
+        outboxService.saveProductPublished(existingProduct);
+
+        log.info("Published product {}", existingProduct.getId());
+        return Result.success(DtoMapper.toDto(existingProduct));
     }
 
     @CacheEvict(value = "products", key = "#id")
@@ -114,9 +122,11 @@ public class ProductService {
         if (product.isEmpty()) {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
         }
-        product.get().takeDown();
-        log.info("Took down product {}", product.get().getId());
-        return Result.success(DtoMapper.toDto(product.get()));
+        var existingProduct = product.get();
+        existingProduct.takeDown();
+        outboxService.saveProductTakenDown(existingProduct);
+        log.info("Took down product {}", existingProduct.getId());
+        return Result.success(DtoMapper.toDto(existingProduct));
     }
 
     @CacheEvict(value = "products", key = "#productId")
@@ -126,14 +136,18 @@ public class ProductService {
         if (product.isEmpty()) {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
         }
-        product.get().addTrack(
+        var existingProduct = product.get();
+        existingProduct.addTrack(
                 request.title(),
                 request.durationMs(),
                 request.trackNumber(),
                 request.isrc()
         );
-        log.info("Added a track to product {}", product.get().getId());
-        return Result.success(DtoMapper.toDto(product.get()));
+        if (existingProduct.isPublished()) {
+            outboxService.saveTrackListUpdated(existingProduct);
+        }
+        log.info("Added a track to product {}", existingProduct.getId());
+        return Result.success(DtoMapper.toDto(existingProduct));
     }
 
     @CacheEvict(value = "products", key = "#productId")
@@ -143,9 +157,14 @@ public class ProductService {
         if (product.isEmpty()) {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
         }
-        product.get().removeTrack(trackId);
+        var existingProduct = product.get();
+        var wasPublished = existingProduct.isPublished();
+        existingProduct.removeTrack(trackId);
+        if (wasPublished) {
+            outboxService.saveTrackListUpdated(existingProduct);
+        }
         log.info("Removed track {} from product {}", trackId, productId);
-        return Result.success(DtoMapper.toDto(product.get()));
+        return Result.success(DtoMapper.toDto(existingProduct));
     }
 
     @CacheEvict(value = "products", key = "#productId")
@@ -155,9 +174,13 @@ public class ProductService {
         if (product.isEmpty()) {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
         }
-        product.get().reorderTracks(request.trackOrder());
+        var existingProduct = product.get();
+        existingProduct.reorderTracks(request.trackOrder());
+        if (existingProduct.isPublished()) {
+            outboxService.saveTrackListUpdated(existingProduct);
+        }
         log.info("Updated track order for product {}", productId);
-        return Result.success(DtoMapper.toDto(product.get()));
+        return Result.success(DtoMapper.toDto(existingProduct));
     }
 
     private Money toMoney(com.soundwave.api.contract.response.MoneyDto dto) {
