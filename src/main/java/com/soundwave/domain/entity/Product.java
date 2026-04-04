@@ -80,13 +80,21 @@ public class Product extends BaseEntity {
         this.status = ProductStatus.TAKEN_DOWN;
     }
 
-    public void updateMetadata(String title, String upc, LocalDate releaseDate,
-                                Genre genre, Money price) {
+    public boolean updateMetadata(String title, String upc, LocalDate releaseDate,
+                                  Genre genre, Money price) {
+        var changed =
+                !Objects.equals(this.title, title == null ? null : title.strip()) ||
+                !Objects.equals(this.upc, upc) ||
+                !Objects.equals(this.releaseDate, releaseDate) ||
+                this.genre != genre ||
+                !Objects.equals(this.price, price);
+
         setTitle(title);
         setUpc(upc);
         this.releaseDate = releaseDate;
         setGenre(genre);
         this.price = price;
+        return changed;
     }
 
     public boolean isPublished() {

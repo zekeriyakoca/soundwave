@@ -67,9 +67,11 @@ public class ArtistService {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Artist not found"));
         }
         var existingArtist = artist.get();
-        existingArtist.updateProfile(request.name(), request.bio());
-        outboxService.saveArtistUpdated(existingArtist);
-        log.info("Updated artist {}", existingArtist.getId());
+        var changed = existingArtist.updateProfile(request.name(), request.bio());
+        if (changed) {
+            outboxService.saveArtistUpdated(existingArtist);
+            log.info("Updated artist {}", existingArtist.getId());
+        }
         return Result.success(DtoMapper.toDto(existingArtist));
     }
 

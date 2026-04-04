@@ -2,6 +2,8 @@ package com.soundwave.domain.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -19,8 +21,8 @@ import java.util.UUID;
 public class OutboxEvent extends VersionedEntity {
 
     @Id
-    @Column(columnDefinition = "CHAR(36)")
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "aggregate_type", nullable = false, length = 50)
     private String aggregateType;
@@ -44,13 +46,11 @@ public class OutboxEvent extends VersionedEntity {
     private Instant publishedAt;
 
     private OutboxEvent(
-            UUID id,
             String aggregateType,
-            UUID aggregateId,
+            java.util.UUID aggregateId,
             String eventType,
             String payload
     ) {
-        this.id = Objects.requireNonNull(id, "Outbox event id cannot be null");
         this.aggregateType = requireNonBlank(aggregateType, "Aggregate type cannot be blank");
         this.aggregateId = Objects.requireNonNull(aggregateId, "Aggregate id cannot be null");
         this.eventType = requireNonBlank(eventType, "Event type cannot be blank");
@@ -61,12 +61,11 @@ public class OutboxEvent extends VersionedEntity {
 
     public static OutboxEvent create(
             String aggregateType,
-            UUID aggregateId,
+            java.util.UUID aggregateId,
             String eventType,
             String payload
     ) {
         return new OutboxEvent(
-                UUID.randomUUID(),
                 aggregateType,
                 aggregateId,
                 eventType,

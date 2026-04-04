@@ -37,23 +37,36 @@ public class Artist extends BaseEntity {
         return new Artist(UUID.randomUUID(), name, bio);
     }
 
-    public void updateProfile(String name, String bio) {
+    public boolean updateProfile(String name, String bio) {
+        var changed =
+                !Objects.equals(this.name, normalizeName(name)) ||
+                !Objects.equals(this.bio, normalizeBio(bio));
+
         setName(name);
         setBio(bio);
+        return changed;
     }
 
     private void setName(String name) {
+        this.name = normalizeName(name);
+    }
+
+    private void setBio(String bio) {
+        this.bio = normalizeBio(bio);
+    }
+
+    private static String normalizeName(String name) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Artist name cannot be blank");
         }
         if (name.strip().length() > 255) {
             throw new IllegalArgumentException("Artist name cannot exceed 255 characters");
         }
-        this.name = name.strip();
+        return name.strip();
     }
 
-    private void setBio(String bio) {
-        this.bio = (bio == null || bio.isBlank()) ? null : bio.strip();
+    private static String normalizeBio(String bio) {
+        return (bio == null || bio.isBlank()) ? null : bio.strip();
     }
 
     @Override

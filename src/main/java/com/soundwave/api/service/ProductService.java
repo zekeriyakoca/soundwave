@@ -86,17 +86,19 @@ public class ProductService {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
         }
         var existingProduct = product.get();
-        existingProduct.updateMetadata(
+        var changed = existingProduct.updateMetadata(
                 request.title(),
                 request.upc(),
                 request.releaseDate(),
                 request.genre(),
                 toMoney(request.price())
         );
-        if (existingProduct.isPublished()) {
+        if (changed && existingProduct.isPublished()) {
             outboxService.saveProductMetadataUpdated(existingProduct);
         }
-        log.info("Updated product metadata {}", existingProduct.getId());
+        if (changed) {
+            log.info("Updated product metadata {}", existingProduct.getId());
+        }
         return Result.success(DtoMapper.toDto(existingProduct));
     }
 

@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 @Embeddable
 @Getter
@@ -39,5 +40,17 @@ public class Money {
 
     public static Money eur(BigDecimal amount) {
         return new Money(amount, "EUR");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Money other)) return false;
+        return Objects.equals(amount, other.amount) && Objects.equals(currency, other.currency);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(amount, currency);
     }
 }
