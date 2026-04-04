@@ -1,7 +1,7 @@
 package com.soundwave.api.service;
 
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.soundwave.domain.dto.ArtistUpdatedPayload;
 import com.soundwave.domain.dto.MoneyPayload;
 import com.soundwave.domain.dto.ProductPayload;
@@ -12,6 +12,7 @@ import com.soundwave.domain.entity.OutboxEvent;
 import com.soundwave.domain.entity.Product;
 import com.soundwave.infrastructure.persistence.repository.OutboxEventRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ public class OutboxService {
 
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void saveProductPublished(Product product) {
@@ -85,12 +87,13 @@ public class OutboxService {
                 writeJson(payload)
         );
         outboxEventRepository.save(outboxEvent);
+        eventPublisher.publishEvent(outboxEvent);
     }
 
     private String writeJson(Object payload) {
         try {
             return objectMapper.writeValueAsString(payload);
-        } catch (JacksonException ex) {
+        } catch (JsonProcessingException ex) {
             throw new IllegalStateException("Could not serialize outbox payload", ex);
         }
     }
