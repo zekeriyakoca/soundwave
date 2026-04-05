@@ -56,10 +56,15 @@ public class Track extends VersionedEntity {
     }
 
     private void setIsrc(String isrc) {
-        if (isrc != null && isrc.length() > 12) {
-            throw new IllegalArgumentException("ISRC cannot exceed 12 characters");
+        if (isrc == null || isrc.isBlank()) {
+            this.isrc = null;
+            return;
         }
-        this.isrc = isrc;
+        var normalized = isrc.strip();
+        if (!normalized.matches("^[A-Za-z0-9]{12}$")) {
+            throw new IllegalArgumentException("ISRC must be 12 alphanumeric characters");
+        }
+        this.isrc = normalized;
     }
 
     private void setDurationMs(int durationMs) {

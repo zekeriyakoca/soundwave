@@ -1,12 +1,10 @@
 package com.soundwave.api.contract;
 
 import com.soundwave.api.contract.response.ArtistDto;
-import com.soundwave.api.contract.response.MoneyDto;
 import com.soundwave.api.contract.response.ProductDto;
 import com.soundwave.api.contract.response.ProductSummaryDto;
 import com.soundwave.api.contract.response.TrackDto;
 import com.soundwave.domain.entity.Artist;
-import com.soundwave.domain.entity.Money;
 import com.soundwave.domain.entity.Product;
 import com.soundwave.domain.entity.Track;
 
@@ -54,7 +52,7 @@ public final class DtoMapper {
                 price != null ? new MoneyDto(price.getAmount(), price.getCurrency()) : null,
                 product.getArtist().getId(),
                 product.getArtist().getName(),
-                product.getTracks().size(),
+                product.getTrackCount(),
                 product.getCreatedAt(),
                 product.getUpdatedAt()
         );

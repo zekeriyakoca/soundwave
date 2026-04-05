@@ -1,4 +1,4 @@
-package com.soundwave.domain.dto;
+package com.soundwave.infrastructure.messaging.payload;
 
 import java.math.BigDecimal;
 

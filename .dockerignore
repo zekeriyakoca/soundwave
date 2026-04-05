@@ -1,0 +1,10 @@
+.git
+.gradle
+.gradle-user
+build
+out
+.idea
+*.iml
+.DS_Store
+README.md
+docs

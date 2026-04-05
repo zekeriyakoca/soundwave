@@ -1,6 +1,6 @@
 package com.soundwave.api.contract.request;
 
-import com.soundwave.api.contract.response.MoneyDto;
+import com.soundwave.api.contract.MoneyDto;
 import com.soundwave.domain.entity.Genre;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

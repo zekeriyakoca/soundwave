@@ -30,17 +30,14 @@ dependencies {
 	runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
 	annotationProcessor("org.projectlombok:lombok")
 
-	implementation("org.mapstruct:mapstruct:1.5.5.Final")
-	annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
-	annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
-
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8")
 	implementation("net.logstash.logback:logstash-logback-encoder:7.4")
-	implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
 	implementation("io.micrometer:micrometer-registry-prometheus")
 
 	// Testing
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("org.testcontainers:junit-jupiter:1.21.0")
+	testImplementation("org.testcontainers:mariadb:1.21.0")
 	testCompileOnly("org.projectlombok:lombok")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testAnnotationProcessor("org.projectlombok:lombok")
@@ -48,4 +45,26 @@ dependencies {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+val unitTest by tasks.registering(Test::class) {
+	group = "verification"
+	description = "Runs unit tests (excluding IntegrationTest classes)."
+	val testSourceSet = sourceSets["test"]
+	testClassesDirs = testSourceSet.output.classesDirs
+	classpath = testSourceSet.runtimeClasspath
+	useJUnitPlatform()
+	include("**/*Test.class")
+	exclude("**/*IntegrationTest.class")
+}
+
+val integrationTest by tasks.registering(Test::class) {
+	group = "verification"
+	description = "Runs integration tests (*IntegrationTest)."
+	val testSourceSet = sourceSets["test"]
+	testClassesDirs = testSourceSet.output.classesDirs
+	classpath = testSourceSet.runtimeClasspath
+	useJUnitPlatform()
+	include("**/*IntegrationTest.class")
+	shouldRunAfter(unitTest)
 }

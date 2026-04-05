@@ -1,10 +1,11 @@
 package com.soundwave.api.service;
 
 import com.soundwave.api.contract.DtoMapper;
+import com.soundwave.api.contract.MoneyDto;
 import com.soundwave.api.contract.request.AddTrackRequest;
 import com.soundwave.api.contract.request.CreateProductRequest;
 import com.soundwave.api.contract.request.ReorderTracksRequest;
-import com.soundwave.api.contract.request.UpdateProductRequest;
+import com.soundwave.api.contract.request.UpdateProductMetadataRequest;
 import com.soundwave.api.contract.response.PagedResponse;
 import com.soundwave.api.contract.response.ProductDto;
 import com.soundwave.api.contract.response.ProductSummaryDto;
@@ -34,7 +35,7 @@ public class ProductService {
     private final ArtistRepository artistRepository;
     private final OutboxService outboxService;
 
-    @Cacheable(value = "products", key = "#id")
+    @Cacheable(value = "products", key = "#id", unless = "!#result.isSuccess()")
     @Transactional(readOnly = true)
     public Result<ProductDto> getProduct(UUID id) {
         var product = productRepository.findWithDetailsById(id);
@@ -46,41 +47,34 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public Result<PagedResponse<ProductSummaryDto>> listProducts(Pageable page) {
-        var products = productRepository.findAllBy(page);
-        var response = new PagedResponse<>(
-                products.map(DtoMapper::toSummaryDto).stream().toList(),
-                products.getNumber(),
-                products.getSize(),
-                products.getTotalElements(),
-                products.getTotalPages()
-        );
+        var response = PagedResponse.from(productRepository.findAllBy(page).map(p -> DtoMapper.toSummaryDto(p)));
         return Result.success(response);
     }
 
     @Transactional
     public Result<ProductDto> createProductAsDraft(CreateProductRequest request) {
-        var artist = artistRepository.findById(request.artistId());
-        if (artist.isEmpty()) {
+        if (!artistRepository.existsById(request.artistId())) {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Artist not found"));
         }
 
+        var artistRef = artistRepository.getReferenceById(request.artistId());
         var product = Product.create(
                 request.title(),
                 request.upc(),
                 request.releaseDate(),
                 request.genre(),
                 toMoney(request.price()),
-                artist.get()
+                artistRef
         );
 
         var saved = productRepository.save(product);
-        log.info("Created product {} for artist {}", saved.getId(), saved.getArtist().getId());
+        log.info("Created product {}", saved.getId());
         return Result.success(DtoMapper.toDto(saved));
     }
 
     @CacheEvict(value = "products", key = "#id")
     @Transactional
-    public Result<ProductDto> updateProductMetadata(UUID id, UpdateProductRequest request) {
+    public Result<ProductDto> updateProductMetadata(UUID id, UpdateProductMetadataRequest request) {
         var product = productRepository.findById(id);
         if (product.isEmpty()) {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
@@ -93,12 +87,15 @@ public class ProductService {
                 request.genre(),
                 toMoney(request.price())
         );
+
         if (changed && existingProduct.isPublished()) {
             outboxService.saveProductMetadataUpdated(existingProduct);
         }
+
         if (changed) {
             log.info("Updated product metadata {}", existingProduct.getId());
         }
+
         return Result.success(DtoMapper.toDto(existingProduct));
     }
 
@@ -127,6 +124,7 @@ public class ProductService {
         var existingProduct = product.get();
         existingProduct.takeDown();
         outboxService.saveProductTakenDown(existingProduct);
+
         log.info("Took down product {}", existingProduct.getId());
         return Result.success(DtoMapper.toDto(existingProduct));
     }
@@ -134,6 +132,7 @@ public class ProductService {
     @CacheEvict(value = "products", key = "#id")
     @Transactional
     public Result<ProductDto> deleteProduct(UUID id) {
+        // Trade-off: I didn't want to allow hard delete or enable full soft-delete for this assignment.
         return takeDownProduct(id);
     }
 
@@ -144,6 +143,7 @@ public class ProductService {
         if (product.isEmpty()) {
             return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
         }
+
         var existingProduct = product.get();
         existingProduct.addTrack(
                 request.title(),
@@ -151,9 +151,11 @@ public class ProductService {
                 request.trackNumber(),
                 request.isrc()
         );
+
         if (existingProduct.isPublished()) {
             outboxService.saveTrackListUpdated(existingProduct);
         }
+
         log.info("Added a track to product {}", existingProduct.getId());
         return Result.success(DtoMapper.toDto(existingProduct));
     }
@@ -167,7 +169,9 @@ public class ProductService {
         }
         var existingProduct = product.get();
         var wasPublished = existingProduct.isPublished();
+
         existingProduct.removeTrack(trackId);
+
         if (wasPublished) {
             outboxService.saveTrackListUpdated(existingProduct);
         }
@@ -191,7 +195,7 @@ public class ProductService {
         return Result.success(DtoMapper.toDto(existingProduct));
     }
 
-    private Money toMoney(com.soundwave.api.contract.response.MoneyDto dto) {
+    private Money toMoney(MoneyDto dto) {
         if (dto == null) return null;
         return Money.of(dto.amount(), dto.currency());
     }

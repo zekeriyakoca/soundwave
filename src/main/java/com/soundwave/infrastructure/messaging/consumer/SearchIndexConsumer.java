@@ -1,12 +1,13 @@
 package com.soundwave.infrastructure.messaging.consumer;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.soundwave.infrastructure.messaging.CatalogEventSchema;
+import com.soundwave.infrastructure.messaging.OutboxEnvelope;
 import com.soundwave.infrastructure.persistence.repository.ProcessedEventRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Component
@@ -27,17 +28,18 @@ public class SearchIndexConsumer extends IdempotentConsumer {
     }
 
     @Override
-    protected void process(String eventType, JsonNode payload) {
-        switch (eventType) {
-            case "ProductPublished" -> log.atInfo()
-                    .addKeyValue("productId", payload.path("payload").path("productId").asText())
-                    .addKeyValue("title", payload.path("payload").path("title").asText())
+    protected void process(OutboxEnvelope envelope) {
+        var body = envelope.payload();
+        switch (envelope.eventType()) {
+            case CatalogEventSchema.PRODUCT_PUBLISHED -> log.atInfo()
+                    .addKeyValue("productId", requiredText(body, "productId"))
+                    .addKeyValue("title", body.path("title").asText())
                     .log("[SearchIndex] Indexing published product");
-            case "ProductTakenDown" -> log.atInfo()
-                    .addKeyValue("productId", payload.path("payload").path("productId").asText())
+            case CatalogEventSchema.PRODUCT_TAKEN_DOWN -> log.atInfo()
+                    .addKeyValue("productId", requiredText(body, "productId"))
                     .log("[SearchIndex] Removing taken down product from index");
             default -> log.atDebug()
-                    .addKeyValue("eventType", eventType)
+                    .addKeyValue("eventType", envelope.eventType())
                     .log("[SearchIndex] Ignoring event");
         }
     }

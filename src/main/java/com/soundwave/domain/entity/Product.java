@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Formula;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -46,6 +47,9 @@ public class Product extends BaseEntity {
     @OrderBy("trackNumber ASC")
     private List<Track> tracks = new ArrayList<>();
 
+    @Formula("(SELECT COUNT(*) FROM tracks t WHERE t.product_id = id)")
+    private int trackCount;
+
     private Product(UUID id, String title, String upc, LocalDate releaseDate,
                     Genre genre, Money price, Artist artist) {
         this.id = Objects.requireNonNull(id, "Product id cannot be null");
@@ -83,8 +87,8 @@ public class Product extends BaseEntity {
     public boolean updateMetadata(String title, String upc, LocalDate releaseDate,
                                   Genre genre, Money price) {
         var changed =
-                !Objects.equals(this.title, title == null ? null : title.strip()) ||
-                !Objects.equals(this.upc, upc) ||
+                !Objects.equals(this.title, normalizeTitle(title)) ||
+                !Objects.equals(this.upc, normalizeUpc(upc)) ||
                 !Objects.equals(this.releaseDate, releaseDate) ||
                 this.genre != genre ||
                 !Objects.equals(this.price, price);
@@ -150,24 +154,37 @@ public class Product extends BaseEntity {
     }
 
     private void setTitle(String title) {
-        if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("Product title cannot be blank");
-        }
-        if (title.strip().length() > 255) {
-            throw new IllegalArgumentException("Product title cannot exceed 255 characters");
-        }
-        this.title = title.strip();
+        this.title = normalizeTitle(title);
     }
 
     private void setUpc(String upc) {
-        if (upc != null && upc.length() != 12) {
-            throw new IllegalArgumentException("UPC must be exactly 12 characters");
-        }
-        this.upc = upc;
+        this.upc = normalizeUpc(upc);
     }
 
     private void setGenre(Genre genre) {
         this.genre = Objects.requireNonNull(genre, "Genre cannot be null");
+    }
+
+    private static String normalizeTitle(String title) {
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException("Product title cannot be blank");
+        }
+        var normalized = title.strip();
+        if (normalized.length() > 255) {
+            throw new IllegalArgumentException("Product title cannot exceed 255 characters");
+        }
+        return normalized;
+    }
+
+    private static String normalizeUpc(String upc) {
+        if (upc == null || upc.isBlank()) {
+            return null;
+        }
+        var normalized = upc.strip();
+        if (!normalized.matches("^\\d{12}$")) {
+            throw new IllegalArgumentException("UPC must be exactly 12 digits");
+        }
+        return normalized;
     }
 
     @Override

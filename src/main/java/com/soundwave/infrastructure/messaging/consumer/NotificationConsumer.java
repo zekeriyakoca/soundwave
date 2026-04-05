@@ -1,12 +1,13 @@
 package com.soundwave.infrastructure.messaging.consumer;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.soundwave.infrastructure.messaging.CatalogEventSchema;
+import com.soundwave.infrastructure.messaging.OutboxEnvelope;
 import com.soundwave.infrastructure.persistence.repository.ProcessedEventRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Component
@@ -27,12 +28,13 @@ public class NotificationConsumer extends IdempotentConsumer {
     }
 
     @Override
-    protected void process(String eventType, JsonNode payload) {
-        if ("ProductPublished".equals(eventType)) {
+    protected void process(OutboxEnvelope envelope) {
+        var body = envelope.payload();
+        if (CatalogEventSchema.PRODUCT_PUBLISHED.equals(envelope.eventType())) {
             log.atInfo()
-                    .addKeyValue("productId", payload.path("payload").path("productId").asText())
-                    .addKeyValue("artistName", payload.path("payload").path("artistName").asText())
-                    .addKeyValue("title", payload.path("payload").path("title").asText())
+                    .addKeyValue("productId", requiredText(body, "productId"))
+                    .addKeyValue("artistName", body.path("artistName").asText())
+                    .addKeyValue("title", body.path("title").asText())
                     .log("[Notification] New release from artist");
         }
     }

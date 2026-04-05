@@ -1,15 +1,14 @@
 package com.soundwave.domain.dto;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class Result<T> {
-    private final T value;
-    private final Error error;
+    private T value;
+    private Error error;
 
     // Needed for caching to be able to deserialize
-    @JsonCreator
-    private Result(@JsonProperty("value") T value, @JsonProperty("error") Error error) {
+    public Result() {
+    }
+
+    private Result(T value, Error error) {
         this.value = value;
         this.error = error;
     }

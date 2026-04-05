@@ -9,6 +9,8 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -39,7 +41,8 @@ public class OutboxEvent extends VersionedEntity {
     @Column(nullable = false)
     private boolean published;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Generated(event = EventType.INSERT)
+    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private Instant createdAt;
 
     @Column(name = "published_at")
@@ -62,7 +65,6 @@ public class OutboxEvent extends VersionedEntity {
         this.eventType = requireNonBlank(eventType, "Event type cannot be blank");
         this.payload = requireNonBlank(payload, "Payload cannot be blank");
         this.published = false;
-        this.createdAt = Instant.now();
     }
 
     public static OutboxEvent create(

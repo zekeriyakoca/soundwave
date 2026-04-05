@@ -22,6 +22,7 @@ public final class ResultResponseMapper {
         var error = result.getError();
         var status = toStatus(error.code());
         var problem = ProblemDetail.forStatusAndDetail(status, error.message());
+        problem.setProperty("code", error.code().name());
         return ResponseEntity.status(status).body(problem);
     }
 

@@ -26,6 +26,8 @@ public class ArtistController {
         return ResultResponseMapper.toResponse(artistService.getArtist(id));
     }
 
+    // Trade-off: I left search out for this assignment.
+    // Doing it properly needs clear query strategy and index design decisions.
     @GetMapping
     public ResponseEntity<?> getAll(
             @PageableDefault(size = 20, sort = "name") Pageable page) {

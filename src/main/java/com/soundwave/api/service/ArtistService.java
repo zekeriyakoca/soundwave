@@ -36,7 +36,7 @@ public class ArtistService {
         return Result.success(DtoMapper.toDto(saved));
     }
 
-    @Cacheable(value = "artists", key = "#id")
+    @Cacheable(value = "artists", key = "#id", unless = "!#result.isSuccess()")
     @Transactional(readOnly = true)
     public Result<ArtistDto> getArtist(UUID id) {
         return artistRepository.findById(id)
@@ -48,14 +48,7 @@ public class ArtistService {
 
     @Transactional(readOnly = true)
     public Result<PagedResponse<ArtistDto>> getAllArtists(Pageable page) {
-        var artists = artistRepository.findAll(page);
-        var response = new PagedResponse<>(
-                artists.map(DtoMapper::toDto).getContent(),
-                artists.getNumber(),
-                artists.getSize(),
-                artists.getTotalElements(),
-                artists.getTotalPages()
-        );
+        var response = PagedResponse.from(artistRepository.findAll(page).map(DtoMapper::toDto));
         return Result.success(response);
     }
 

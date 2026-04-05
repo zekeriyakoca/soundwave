@@ -51,7 +51,7 @@ public class GlobalExceptionHandler {
                 .addKeyValue("status", HttpStatus.CONFLICT.value())
                 .addKeyValue("errorMessage", ex.getMessage())
                 .log("Business rule rejected the request");
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Operation not allowed in current state");
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -63,7 +63,7 @@ public class GlobalExceptionHandler {
                 .addKeyValue("status", HttpStatus.BAD_REQUEST.value())
                 .addKeyValue("errorMessage", ex.getMessage())
                 .log("Request contained invalid input");
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid input provided");
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

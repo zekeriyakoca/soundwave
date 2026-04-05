@@ -1,4 +1,4 @@
-package com.soundwave.config.logging;
+package com.soundwave.config.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

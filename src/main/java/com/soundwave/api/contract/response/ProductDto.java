@@ -1,6 +1,7 @@
 package com.soundwave.api.contract.response;
 
-import java.math.BigDecimal;
+import com.soundwave.api.contract.MoneyDto;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;

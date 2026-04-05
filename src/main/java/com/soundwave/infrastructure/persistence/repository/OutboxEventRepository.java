@@ -16,4 +16,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
 
     @Query("SELECT count(e) FROM OutboxEvent e WHERE e.published = false AND e.failed = false")
     long countByPublishedFalseAndFailedFalse();
+
+    @Query("SELECT count(e) FROM OutboxEvent e WHERE e.failed = true")
+    long countByFailedTrue();
 }

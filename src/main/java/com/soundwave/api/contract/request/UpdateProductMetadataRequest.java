@@ -1,6 +1,6 @@
 package com.soundwave.api.contract.request;
 
-import com.soundwave.api.contract.response.MoneyDto;
+import com.soundwave.api.contract.MoneyDto;
 import com.soundwave.domain.entity.Genre;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Pattern;
 
 import java.time.LocalDate;
 
-public record UpdateProductRequest(
+public record UpdateProductMetadataRequest(
         @NotBlank String title,
         @Pattern(regexp = "^\\d{12}$", message = "UPC must be exactly 12 digits")
         String upc,

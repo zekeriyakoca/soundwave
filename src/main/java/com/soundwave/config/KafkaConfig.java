@@ -9,7 +9,7 @@ import org.springframework.kafka.core.KafkaOperations;
 import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
-import org.springframework.util.backoff.FixedBackOff;
+import org.springframework.util.backoff.ExponentialBackOff;
 
 @Configuration
 public class KafkaConfig {
@@ -55,8 +55,10 @@ public class KafkaConfig {
                 kafkaOperations,
                 (record, ex) -> new TopicPartition(record.topic() + ".dlt", record.partition())
         );
-        // TODO: I would add a jitter here but I'm running out of time.
-        var errorHandler = new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 3L));
+        // Trade-off: I would add a jitter here, but I'm running out of time.
+        var backOff = new ExponentialBackOff(2000L, 2.0);
+        backOff.setMaxAttempts(3);
+        var errorHandler = new DefaultErrorHandler(recoverer, backOff);
         errorHandler.addNotRetryableExceptions(IllegalArgumentException.class, IllegalStateException.class);
         return errorHandler;
     }

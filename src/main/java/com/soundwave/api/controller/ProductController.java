@@ -4,8 +4,9 @@ import com.soundwave.api.contract.ResultResponseMapper;
 import com.soundwave.api.contract.request.AddTrackRequest;
 import com.soundwave.api.contract.request.CreateProductRequest;
 import com.soundwave.api.contract.request.ReorderTracksRequest;
-import com.soundwave.api.contract.request.UpdateProductRequest;
+import com.soundwave.api.contract.request.UpdateProductMetadataRequest;
 import com.soundwave.api.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -40,7 +41,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable UUID id, @Valid @RequestBody UpdateProductRequest request) {
+    public ResponseEntity<?> update(@PathVariable UUID id, @Valid @RequestBody UpdateProductMetadataRequest request) {
         return ResultResponseMapper.toResponse(productService.updateProductMetadata(id, request));
     }
 
@@ -54,6 +55,8 @@ public class ProductController {
         return ResultResponseMapper.toResponse(productService.takeDownProduct(id));
     }
 
+    @Operation(summary = "Deprecated. Use POST /api/v1/products/{id}/takedown instead.")
+    @Deprecated
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable UUID id) {
         return ResultResponseMapper.toResponse(productService.deleteProduct(id));

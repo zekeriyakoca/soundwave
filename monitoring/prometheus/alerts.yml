@@ -1,0 +1,32 @@
+groups:
+  - name: soundwave-outbox-alerts
+    rules:
+      - alert: OutboxPendingBacklogHigh
+        expr: outbox_events_pending > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: soundwave
+        annotations:
+          summary: "Outbox pending backlog is high"
+          description: "outbox.events.pending has been above 100 for at least 5 minutes."
+
+      - alert: OutboxFailedEventsDetected
+        expr: outbox_events_failed > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: soundwave
+        annotations:
+          summary: "Failed outbox events detected"
+          description: "There are permanently failed rows in outbox_events."
+
+      - alert: OutboxDltEventsDetected
+        expr: increase(outbox_dlt_events_total[10m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          service: soundwave
+        annotations:
+          summary: "Dead-letter events observed"
+          description: "DLT events increased in the last 10 minutes."

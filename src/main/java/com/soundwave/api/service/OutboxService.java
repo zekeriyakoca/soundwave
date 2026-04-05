@@ -1,21 +1,25 @@
 package com.soundwave.api.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.soundwave.domain.dto.ArtistUpdatedPayload;
-import com.soundwave.domain.dto.MoneyPayload;
-import com.soundwave.domain.dto.ProductPayload;
-import com.soundwave.domain.dto.TrackListUpdatedPayload;
-import com.soundwave.domain.dto.TrackPayload;
 import com.soundwave.domain.entity.Artist;
 import com.soundwave.domain.entity.OutboxEvent;
 import com.soundwave.domain.entity.Product;
+import com.soundwave.infrastructure.messaging.payload.ArtistUpdatedPayload;
+import com.soundwave.infrastructure.messaging.payload.MoneyPayload;
+import com.soundwave.infrastructure.messaging.payload.ProductPayload;
+import com.soundwave.infrastructure.messaging.payload.TrackListUpdatedPayload;
+import com.soundwave.infrastructure.messaging.payload.TrackPayload;
+import com.soundwave.infrastructure.messaging.CatalogEventSchema;
+import com.soundwave.infrastructure.messaging.OutboxEventSaved;
 import com.soundwave.infrastructure.persistence.repository.OutboxEventRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -23,30 +27,23 @@ public class OutboxService {
 
     private static final String PRODUCT_AGGREGATE = "Product";
     private static final String ARTIST_AGGREGATE = "Artist";
-
-    private static final String PRODUCT_METADATA_UPDATED_EVENT = "ProductMetadataUpdated";
-    private static final String PRODUCT_PUBLISHED_EVENT = "ProductPublished";
-    private static final String PRODUCT_TAKEN_DOWN_EVENT = "ProductTakenDown";
-    private static final String TRACK_LIST_UPDATED_EVENT = "TrackListUpdated";
-    private static final String ARTIST_UPDATED_EVENT = "ArtistUpdated";
-
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void saveProductPublished(Product product) {
-        save(PRODUCT_AGGREGATE, product.getId(), PRODUCT_PUBLISHED_EVENT, toProductPayload(product));
+        save(PRODUCT_AGGREGATE, product.getId(), CatalogEventSchema.PRODUCT_PUBLISHED, toProductPayload(product));
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void saveProductTakenDown(Product product) {
-        save(PRODUCT_AGGREGATE, product.getId(), PRODUCT_TAKEN_DOWN_EVENT, toProductPayload(product));
+        save(PRODUCT_AGGREGATE, product.getId(), CatalogEventSchema.PRODUCT_TAKEN_DOWN, toProductPayload(product));
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void saveProductMetadataUpdated(Product product) {
-        save(PRODUCT_AGGREGATE, product.getId(), PRODUCT_METADATA_UPDATED_EVENT, toProductPayload(product));
+        save(PRODUCT_AGGREGATE, product.getId(), CatalogEventSchema.PRODUCT_METADATA_UPDATED, toProductPayload(product));
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -55,7 +52,7 @@ public class OutboxService {
                 product.getId(),
                 product.getArtist().getId(),
                 product.getArtist().getName(),
-                product.getTracks().size(),
+                product.getTrackCount(),
                 product.getTracks().stream()
                         .map(track -> new TrackPayload(
                                 track.getId(),
@@ -66,7 +63,7 @@ public class OutboxService {
                         ))
                         .toList()
         );
-        save(PRODUCT_AGGREGATE, product.getId(), TRACK_LIST_UPDATED_EVENT, payload);
+        save(PRODUCT_AGGREGATE, product.getId(), CatalogEventSchema.TRACK_LIST_UPDATED, payload);
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -76,10 +73,11 @@ public class OutboxService {
                 artist.getName(),
                 artist.getBio()
         );
-        save(ARTIST_AGGREGATE, artist.getId(), ARTIST_UPDATED_EVENT, payload);
+        save(ARTIST_AGGREGATE, artist.getId(), CatalogEventSchema.ARTIST_UPDATED, payload);
     }
 
-    private void save(String aggregateType, java.util.UUID aggregateId, String eventType, Object payload) {
+    private void save(String aggregateType, UUID aggregateId, String eventType, Object payload) {
+        CatalogEventSchema.validateEventType(eventType);
         var outboxEvent = OutboxEvent.create(
                 aggregateType,
                 aggregateId,
@@ -87,13 +85,13 @@ public class OutboxService {
                 writeJson(payload)
         );
         outboxEventRepository.save(outboxEvent);
-        eventPublisher.publishEvent(outboxEvent);
+        eventPublisher.publishEvent(new OutboxEventSaved());
     }
 
     private String writeJson(Object payload) {
         try {
             return objectMapper.writeValueAsString(payload);
-        } catch (JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             throw new IllegalStateException("Could not serialize outbox payload", ex);
         }
     }
@@ -106,7 +104,7 @@ public class OutboxService {
                 product.getArtist().getName(),
                 product.getUpc(),
                 product.getGenre().name(),
-                product.getTracks().size(),
+                product.getTrackCount(),
                 toMoney(product)
         );
     }

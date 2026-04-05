@@ -1,4 +1,4 @@
-package com.soundwave.api.contract.response;
+package com.soundwave.api.contract;
 
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;

@@ -1,13 +1,14 @@
 package com.soundwave.infrastructure.messaging.consumer;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.soundwave.infrastructure.messaging.CatalogEventSchema;
+import com.soundwave.infrastructure.messaging.OutboxEnvelope;
 import com.soundwave.infrastructure.persistence.repository.ProcessedEventRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Component
@@ -36,14 +37,18 @@ public class CacheInvalidationConsumer extends IdempotentConsumer {
     }
 
     @Override
-    protected void process(String eventType, JsonNode payload) {
-        switch (eventType) {
-            case "ProductMetadataUpdated", "TrackListUpdated", "ProductPublished", "ProductTakenDown" -> {
-                var productId = payload.path("payload").path("productId").asText();
+    protected void process(OutboxEnvelope envelope) {
+        var body = envelope.payload();
+        switch (envelope.eventType()) {
+            case CatalogEventSchema.PRODUCT_METADATA_UPDATED,
+                 CatalogEventSchema.TRACK_LIST_UPDATED,
+                 CatalogEventSchema.PRODUCT_PUBLISHED,
+                 CatalogEventSchema.PRODUCT_TAKEN_DOWN -> {
+                var productId = requiredText(body, "productId");
                 evict("products", productId);
             }
-            case "ArtistUpdated" -> {
-                var artistId = payload.path("payload").path("artistId").asText();
+            case CatalogEventSchema.ARTIST_UPDATED -> {
+                var artistId = requiredText(body, "artistId");
                 evict("artists", artistId);
             }
         }
