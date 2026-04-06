@@ -111,6 +111,14 @@ public class Product extends BaseEntity {
         if (numberTaken) {
             throw new IllegalStateException("Track number " + trackNumber + " already exists");
         }
+        if (isrc != null && !isrc.isBlank()) {
+            var normalizedIsrc = isrc.strip();
+            var isrcTaken = tracks.stream()
+                    .anyMatch(t -> normalizedIsrc.equals(t.getIsrc()));
+            if (isrcTaken) {
+                throw new IllegalStateException("ISRC " + normalizedIsrc + " already exists on this product");
+            }
+        }
         tracks.add(new Track(UUID.randomUUID(), title, durationMs, trackNumber, isrc));
     }
 

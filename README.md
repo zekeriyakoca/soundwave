@@ -70,6 +70,7 @@ Metrics/dashboard plan: [Metrics and Grafana Plan](docs/metrics-and-grafana-plan
 - [Trade-offs](docs/trade-offs.md)
 - [Release Safety](docs/release-safety.md)
 - [Security](docs/security.md)
+- [Domain Evolution (Phase 2)](docs/domain-evolution.md)
 
 ## Tech Stack
 

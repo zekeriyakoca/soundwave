@@ -41,3 +41,7 @@ Conscious shortcuts taken to keep the assignment focused. Each one is something 
 - **Decision:** No `/artists?query=...` endpoint.
 - **Why:** Doing search well needs an explicit query strategy (LIKE vs full-text vs ElasticSearch), index design, and pagination ordering decisions. None of those are interesting at this scope.
 - **Production fix:** Decide read-model strategy first (DB full-text vs external search engine), then add the endpoint.
+
+## Scope
+
+The bigger "where this service would grow into" picture — `Delivery` aggregate, validation pipeline, scheduling, provider fan-out — is in [Domain Evolution](domain-evolution.md). It is intentionally a doc, not code.

@@ -174,6 +174,16 @@ class ProductTest {
             );
             assertTrue(ex.getMessage().contains("already exists"));
         }
+
+        @Test
+        void throws_whenDuplicateIsrc() {
+            var product = draftProductWithTwoTracks();
+
+            var ex = assertThrows(IllegalStateException.class, () ->
+                    product.addTrack("You Make Loving Fun", 217000, 3, "USWB19900001")
+            );
+            assertTrue(ex.getMessage().contains("ISRC"));
+        }
     }
 
     @Nested
