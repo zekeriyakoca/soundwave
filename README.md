@@ -124,6 +124,27 @@ docker compose up mariadb kafka redis -d
 
 Kafka bootstrap for local app run: `localhost:29092`
 
+## Load Test (k6)
+
+Declarative k6 scenario that drives the full write-side flow (create artist → product → tracks → publish → update → takedown) plus a low-rate "chaos" scenario that fires intentionally invalid requests so 4xx error rates appear on dashboards. Everything goes through the real outbox → Kafka → consumer path, so backlog, publish throughput, latency, and batch-size panels on *Outbox Health* light up.
+
+```bash
+docker compose --profile load run --rm k6
+```
+
+Watch it live on:
+- Grafana → *Soundwave — Outbox Health* — http://localhost:3000
+- Prometheus — http://localhost:9090
+
+To force real publish failures, stop Kafka briefly while the test runs:
+
+```bash
+docker compose stop kafka   # pending + failure rate climb
+docker compose start kafka  # publisher recovers on next tick
+```
+
+Script: [`k6/catalog-load.js`](k6/catalog-load.js). Override base URL for a host-installed k6 via `BASE_URL=http://localhost:8080/api/v1 k6 run k6/catalog-load.js`.
+
 ## Run Tests
 
 ```bash

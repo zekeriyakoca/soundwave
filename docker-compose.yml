@@ -97,6 +97,18 @@ services:
     depends_on:
       - prometheus
 
+  k6:
+    image: grafana/k6:0.52.0
+    profiles: ["load"]
+    volumes:
+      - ./k6:/scripts:ro
+    environment:
+      BASE_URL: http://app:8080/api/v1
+    entrypoint: ["k6", "run", "/scripts/catalog-load.js"]
+    depends_on:
+      app:
+        condition: service_started
+
 volumes:
   mariadb_data:
   kafka_data:
