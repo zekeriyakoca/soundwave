@@ -30,5 +30,12 @@
 - Failed rows: `outbox_events_failed > 0 for 2m`
 - DLT spike: `increase(outbox_dlt_events_total[10m]) > 0`
 
+## Provisioned Dashboard
+- **Soundwave — Outbox Health** (`soundwave-outbox-health`), folder: *Soundwave*
+- Source: [`monitoring/grafana/dashboards/outbox-health.json`](../monitoring/grafana/dashboards/outbox-health.json)
+- Loaded declaratively via the file provider in [`provisioning/dashboards/dashboards.yml`](../monitoring/grafana/provisioning/dashboards/dashboards.yml); no UI import needed.
+- Panels: pending / failed / published / DLT stats, backlog trend, publish throughput vs failures, publish latency (mean + max), batch size, DLT rate.
+- Open: http://localhost:3000 → Dashboards → Soundwave → Outbox Health.
+
 ## Scope Note
-Current assignment includes datasource provisioning and alert rules. Dashboard JSON provisioning can be added as next step.
+Datasource + dashboards + alert rules are all provisioned from disk. API latency and consumer-lag dashboards are the natural next additions.

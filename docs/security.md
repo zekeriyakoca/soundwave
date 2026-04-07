@@ -1,7 +1,7 @@
 # Security
 
 ## Scope Note
-Authentication and authorization are intentionally out of scope for this assignment. The API is open. This document only covers the operational exposure surface this project actually creates and the immediate steps to harden it.
+Authentication and authorization are intentionally out of scope for the current phase. The API is open. This document only covers the operational exposure surface this project actually creates and the immediate steps to harden it.
 
 ## Currently Exposed Endpoints
 

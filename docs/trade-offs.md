@@ -1,6 +1,6 @@
 # Trade-offs
 
-Conscious shortcuts taken to keep the assignment focused. Each one is something I would revisit before production.
+Conscious shortcuts in the current scope. Each one is something to revisit before production.
 
 ## Messaging
 

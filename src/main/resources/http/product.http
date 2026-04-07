@@ -1,8 +1,8 @@
 @baseUrl = http://localhost:8080/api/v1
-@artistId = 00000000-0000-0000-0000-000000000000
-@productId = 00000000-0000-0000-0000-000000000000
-@track1Id = 00000000-0000-0000-0000-000000000000
-@track2Id = 00000000-0000-0000-0000-000000000000
+@artistId = f55eca4b-5793-4759-b857-be293f6630c3
+@productId = 92a4272d-3309-4c21-89b0-2694365b3949
+@track1Id = fe389960-62d6-4e6f-8341-d6e5695ad276
+@track2Id = e9bf5bf7-8a0f-4a79-a810-8540ff211f10
 
 ### 1) Create artist (prerequisite)
 POST {{baseUrl}}/artists

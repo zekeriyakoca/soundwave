@@ -24,7 +24,7 @@ Caveat: only safe when the side effect is itself transactional or idempotent (ca
 - **In-memory dedup cache**
   - Rejected: restart/eviction can lose dedup history; not safe across instances.
 - **Exactly-once end-to-end (Kafka transactions)**
-  - Rejected: requires transactional producer + read-process-write consumer pattern, broker config tuning, and ties producer/consumer lifecycles. Too much complexity for the assignment scope and not needed once consumers are idempotent.
+  - Rejected: requires transactional producer + read-process-write consumer pattern, broker config tuning, and ties producer/consumer lifecycles. Too much complexity for the current scope and not needed once consumers are idempotent.
 - **Producer-side dedup only**
   - Rejected: does not protect against consumer reprocessing after offset replay or rebalance.
 

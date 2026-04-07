@@ -4,6 +4,14 @@ Event-driven backend service for a music catalog, built with Java 25, Spring Boo
 
 The API manages artists/products/tracks. State changes create domain events, and consumers react to those events.
 
+## Status
+
+This repository is **Phase 1**: the catalog write-side, transactional outbox, idempotent event consumers, cache invalidation via events, and the operational scaffolding around them. It is the foundation the rest of the system grows on top of.
+
+**Phase 2** — release pipeline (auto-validation, optional manual review, scheduled release on `releaseDate`, provider fan-out) is designed and documented but intentionally not built. The patterns under it (outbox, inbox, cache invalidation) are already in Phase 1 and would be reused as-is.
+
+> **→ See [Domain Evolution (Phase 2)](docs/domain-evolution.md) for the target shape.**
+
 ## Architecture
 
 ```mermaid
@@ -55,7 +63,8 @@ Details: [Event Contract Governance](docs/event-contract-governance.md)
   - `outbox.publish.duration` (timer — per-event publish latency)
   - `outbox.publish.batch.size` (distribution — events per flush)
   - `outbox.dlt.events` (counter)
-- **Monitoring**: Prometheus alert rules + Grafana datasource provisioning
+- **Monitoring**: Prometheus alert rules + Grafana datasource and dashboard provisioning
+- **Dashboard**: *Soundwave — Outbox Health* (provisioned from [`monitoring/grafana/dashboards/outbox-health.json`](monitoring/grafana/dashboards/outbox-health.json)) — backlog, throughput, publish latency, batch size, DLT rate. Available at http://localhost:3000 after `docker compose up`.
 
 Runbook: [Runbook Lite](docs/runbook-lite.md)
 DLT recovery plan: [DLT Recovery Plan](docs/dlt-recovery-plan.md)
@@ -178,22 +187,26 @@ src/main/java/com/soundwave/
 └── infrastructure/      # persistence + messaging
 ```
 
-## Known Trade-offs / Next Steps
+## Roadmap
 
-### Next
-- Enrich OpenAPI documentation for all endpoints and common error responses.
-- Tighten duplicate-key detection to SQL-state/constraint-level check.
-- Implement DLT recovery worker + replay flow (quarantine model, not drop model).
-- Add missing distributed-system test types using real Kafka (Testcontainers), especially retry/DLT/replay and failure-path integration tests.
-- Add fitness tests for event contract rules (envelope invariants and allowed event types).
-- Add Grafana dashboards for API latency, outbox health, and DLT trend.
-- Add JaCoCo test coverage reporting in CI with a baseline threshold for service and domain layers.
-- Apply the security plan in [Security](docs/security.md): split actuator ports, restrict scrape access, add auth at the edge.
-- Add a `processed_events` retention job (delete rows older than the longest expected Kafka replay window).
+### Next — finishing Phase 1
+Concrete polish items on the current code, grouped by area:
 
-### Later
-- Secure resources and deploy to k3s with environment-specific configs/secrets.
-- Run consumers in separate JVM/processes for independent scaling and isolation.
-- Add artist/product search API with semantic search support (ElasticSearch or similar).
+- **Testing** — add Kafka Testcontainers coverage for retry/DLT/replay paths; add fitness tests for the event contract (envelope invariants and allowed event types); add JaCoCo coverage reporting in CI with a baseline threshold for service and domain layers.
+- **Robustness** — tighten duplicate-key detection to a SQL-state / constraint-level check; implement the DLT recovery worker + replay flow (quarantine model, not drop model); add a `processed_events` retention job (delete rows older than the longest expected Kafka replay window).
+- **Observability** — enrich OpenAPI documentation for all endpoints and common error responses; add Grafana dashboards for API latency and consumer lag (Outbox Health is already provisioned).
+- **Security** — apply the plan in [Security](docs/security.md): split actuator ports, restrict scrape access, add auth at the edge.
+
+### Later — Phase 1 hardening at scale
+Longer-horizon items still inside the Phase 1 surface:
+
+- Secure resources and deploy to k3s with environment-specific configs and secrets.
+- Run consumers in separate JVM processes for independent scaling and isolation.
 - Read model split for heavy list queries.
-- Load and resilience testing with latency/error baselines.
+- Artist/product search API backed by a real search engine (ElasticSearch or similar).
+- Load and resilience testing with latency and error baselines.
+
+### Phase 2 — release pipeline
+Auto-validation, optional manual review, scheduled release on `releaseDate`, and provider fan-out. Designed and documented but intentionally not built; the patterns under it (outbox, idempotent consumers, cache invalidation) are already in Phase 1 and would be reused as-is.
+
+→ [Domain Evolution (Phase 2)](docs/domain-evolution.md)

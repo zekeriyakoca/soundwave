@@ -14,7 +14,7 @@
 - **Scattered constants per service**
   - Rejected: high drift risk.
 - **Schema Registry + Avro now**
-  - Rejected for assignment scope; good candidate for production evolution.
+  - Rejected at the current scope; good candidate for production evolution.
 
 ## Consequences
 - Contract behavior is clear and testable.

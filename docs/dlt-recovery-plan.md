@@ -20,4 +20,4 @@ Kafka offset rewind is possible, but should be a last resort.
 Reason: it can replay many unrelated messages; use only when idempotency is trusted.
 
 ## Scope Note
-Current assignment keeps DLT handling at log + metric level. The plan above is the next practical step.
+The current implementation keeps DLT handling at log + metric level. The plan above is the next practical step.

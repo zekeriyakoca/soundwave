@@ -14,10 +14,10 @@
 - **Direct Kafka publish in service method**
   - Rejected: DB/Kafka can diverge on partial failure.
 - **CDC outbox (Debezium)**
-  - Rejected for this assignment due to extra infrastructure complexity.
+  - Rejected: extra infrastructure complexity outweighs the benefit at the current scale.
 
 ## Consequences
-- Consistency model is simple and robust for assignment scope.
+- Consistency model is simple and robust for the current scope.
 - Multi-node duplicate publish is still possible without DB-level claiming.
 
 ## Success Criteria
