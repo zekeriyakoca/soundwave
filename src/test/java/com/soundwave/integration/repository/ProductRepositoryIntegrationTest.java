@@ -7,6 +7,7 @@ import com.soundwave.domain.entity.Product;
 import com.soundwave.integration.MariaDbIntegrationTestBase;
 import com.soundwave.infrastructure.persistence.repository.ArtistRepository;
 import com.soundwave.infrastructure.persistence.repository.ProductRepository;
+import com.soundwave.infrastructure.persistence.specification.ProductSpecifications;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -138,7 +139,8 @@ class ProductRepositoryIntegrationTest extends MariaDbIntegrationTestBase {
             }
             productRepository.flush();
 
-            var page = productRepository.findAllBy(
+            var page = productRepository.findAll(
+                    ProductSpecifications.hasArtistId(null),
                     PageRequest.of(0, 2, Sort.by("title"))
             );
             entityManager.clear();

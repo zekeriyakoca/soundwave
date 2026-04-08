@@ -38,7 +38,7 @@ flowchart LR
 - **Inbox pattern in consumers**: each consumer group stores processed IDs in `processed_events` before business logic.
 - **DLT is quarantine, not final sink**: current scope logs + metrics DLT events; recovery worker/replay flow is planned.
 - **Clear event policy**: only meaningful catalog events are published (`ProductPublished`, `ProductTakenDown`, `ProductMetadataUpdated`, `TrackListUpdated`, `ArtistUpdated`).
-- **Soft delete via takedown**: `DELETE /products/{id}` is mapped to takedown. Once published, products are quarantined rather than destroyed so downstream consumers (search index, cache, notification) stay consistent with the events they already received. Hard delete with no compensating event would create silent drift.
+- **No hard delete**: products are taken down via `POST /products/{id}/takedown`, never destroyed. Once published, a product has produced events that downstream consumers (search index, cache, notification) reacted to; hard delete with no compensating event would create silent drift.
 
 Draft products do not produce events.
 
@@ -176,18 +176,19 @@ Workflow: [.github/workflows/ci.yml](.github/workflows/ci.yml)
 
 ### Products
 
-| Method | Endpoint | Description                             |
-|---|---|-----------------------------------------|
-| POST | `/api/v1/products` | Create product as draft                 |
-| GET | `/api/v1/products/{id}` | Get product details                     |
-| GET | `/api/v1/products` | List products (paginated)               |
-| PUT | `/api/v1/products/{id}` | Update product metadata                 |
-| POST | `/api/v1/products/{id}/publish` | Publish product                         |
-| POST | `/api/v1/products/{id}/takedown` | Take down product                       |
-| DELETE | `/api/v1/products/{id}` | Delete (mapped to takedown temporarily) |
-| POST | `/api/v1/products/{id}/tracks` | Add track                               |
-| DELETE | `/api/v1/products/{id}/tracks/{trackId}` | Remove track                            |
-| PUT | `/api/v1/products/{id}/tracks/order` | Reorder tracks                          |
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/v1/products` | Create product as draft |
+| GET | `/api/v1/products/{id}` | Get product details |
+| GET | `/api/v1/products` | List products (paginated, optional `artistId` filter) |
+| PUT | `/api/v1/products/{id}` | Update product metadata (full replacement) |
+| PUT | `/api/v1/products/{id}/artist` | Reassign product to a different artist |
+| POST | `/api/v1/products/{id}/publish` | Publish product |
+| POST | `/api/v1/products/{id}/takedown` | Take down product |
+| GET | `/api/v1/products/{id}/tracks` | List tracks for a product |
+| POST | `/api/v1/products/{id}/tracks` | Add track |
+| DELETE | `/api/v1/products/{id}/tracks/{trackId}` | Remove track |
+| PUT | `/api/v1/products/{id}/tracks/order` | Reorder tracks |
 
 ### Artists
 

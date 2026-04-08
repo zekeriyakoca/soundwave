@@ -27,14 +27,21 @@ Conscious shortcuts in the current scope. Each one is something to revisit befor
 
 ## Data
 
-### Soft delete via takedown
-- **Where:** `ProductService.deleteProduct`
-- **Decision:** `DELETE /products/{id}` is mapped to takedown. There is no hard delete.
+### No hard delete for products
+- **Where:** `ProductController` exposes only `POST /products/{id}/takedown`; no `DELETE /products/{id}`.
+- **Decision:** Products are taken down, never destroyed. The previous `DELETE` alias was removed.
 - **Why:** Once a product has been published, it has produced events that downstream consumers (search index, cache, notification) reacted to. Hard delete would create silent inconsistency in those systems with no compensating event.
 - **Risk:** Callers that expect "really gone" semantics will be surprised.
-- **Production fix:** Either expose takedown explicitly and remove the DELETE alias, or add a `ProductDeleted` event with consumer-side compensation.
+- **Production fix:** If a true delete is ever needed, add a `ProductDeleted` event with consumer-side compensation rather than a silent DB delete.
 
 ## API
+
+### Metadata update is `PUT`, artist reassign is a separate `PUT`
+- **Where:** `ProductController.update`, `ProductController.reassignArtist`
+- **Decision:** Two endpoints — `PUT /products/{id}` (full metadata replace) and `PUT /products/{id}/artist` (reassign) — instead of one `PATCH /products/{id}` covering both.
+- **Why:** PATCH would force "missing vs explicit null" handling on every field (needs `JsonNullable` or `Optional` wrappers), break `@NotBlank`-style validation, push conditional setters into the aggregate, and merge two distinct outbox concerns into one branchy service method.
+- **Risk:** Clients that need to change metadata + artist atomically must send two requests.
+- **Production fix:** If atomic multi-field updates become a real client need, add `PATCH /products/{id}` *alongside* the existing PUTs rather than replacing them.
 
 ### No artist search endpoint
 - **Where:** `ArtistController`

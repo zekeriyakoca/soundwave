@@ -3,6 +3,7 @@ package com.soundwave.api.advice;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -64,6 +65,18 @@ public class GlobalExceptionHandler {
                 .addKeyValue("errorMessage", ex.getMessage())
                 .log("Request contained invalid input");
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid input provided");
+    }
+
+    @ExceptionHandler(InvalidDataAccessApiUsageException.class)
+    public ProblemDetail handleInvalidDataAccessApiUsage(InvalidDataAccessApiUsageException ex, HttpServletRequest request) {
+        log.atWarn()
+                .setCause(ex)
+                .addKeyValue("event", "request.invalid_query")
+                .addKeyValue("path", request.getRequestURI())
+                .addKeyValue("status", HttpStatus.BAD_REQUEST.value())
+                .addKeyValue("errorMessage", ex.getMessage())
+                .log("Invalid query parameter (e.g. unknown sort property)");
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid query parameter");
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
