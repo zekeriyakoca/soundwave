@@ -1,5 +1,6 @@
 @baseUrl = http://localhost:8080/api/v1
 @artistId = f55eca4b-5793-4759-b857-be293f6630c3
+@secondaryArtistId = 00000000-0000-0000-0000-000000000000
 @productId = 92a4272d-3309-4c21-89b0-2694365b3949
 @track1Id = fe389960-62d6-4e6f-8341-d6e5695ad276
 @track2Id = e9bf5bf7-8a0f-4a79-a810-8540ff211f10
@@ -17,7 +18,20 @@ Content-Type: application/json
 client.global.set("artistId", response.body.id);
 %}
 
-### 2) Create product as draft
+### 2) Create a second artist (for reassignment scenario)
+POST {{baseUrl}}/artists
+Content-Type: application/json
+
+{
+  "name": "Stevie Nicks",
+  "bio": "American singer-songwriter"
+}
+
+> {%
+client.global.set("secondaryArtistId", response.body.id);
+%}
+
+### 3) Create product as draft
 POST {{baseUrl}}/products
 Content-Type: application/json
 
@@ -37,7 +51,7 @@ Content-Type: application/json
 client.global.set("productId", response.body.id);
 %}
 
-### 3) Add first track
+### 4) Add first track
 POST {{baseUrl}}/products/{{productId}}/tracks
 Content-Type: application/json
 
@@ -52,7 +66,7 @@ Content-Type: application/json
 client.global.set("track1Id", response.body.tracks[0].id);
 %}
 
-### 4) Add second track
+### 5) Add second track
 POST {{baseUrl}}/products/{{productId}}/tracks
 Content-Type: application/json
 
@@ -68,10 +82,10 @@ client.global.set("track1Id", response.body.tracks[0].id);
 client.global.set("track2Id", response.body.tracks[1].id);
 %}
 
-### 5) Publish product
+### 6) Publish product
 POST {{baseUrl}}/products/{{productId}}/publish
 
-### 6) Update product metadata
+### 7) Update product metadata (full replacement)
 PUT {{baseUrl}}/products/{{productId}}
 Content-Type: application/json
 
@@ -86,7 +100,15 @@ Content-Type: application/json
   }
 }
 
-### 7) Reorder tracks
+### 8) Reassign artist
+PUT {{baseUrl}}/products/{{productId}}/artist
+Content-Type: application/json
+
+{
+  "artistId": "{{secondaryArtistId}}"
+}
+
+### 9) Reorder tracks
 PUT {{baseUrl}}/products/{{productId}}/tracks/order
 Content-Type: application/json
 
@@ -97,17 +119,20 @@ Content-Type: application/json
   ]
 }
 
-### 8) Get product
+### 10) Get product
 GET {{baseUrl}}/products/{{productId}}
 
-### 9) List products
+### 11) List tracks for a product
+GET {{baseUrl}}/products/{{productId}}/tracks
+
+### 12) List products (no filter)
 GET {{baseUrl}}/products?page=0&size=20&sort=title
 
-### 10) Remove one track
+### 13) List products filtered by artist
+GET {{baseUrl}}/products?page=0&size=20&sort=title&artistId={{artistId}}
+
+### 14) Remove one track
 DELETE {{baseUrl}}/products/{{productId}}/tracks/{{track2Id}}
 
-### 11) Soft delete product (maps to takeDown)
-DELETE {{baseUrl}}/products/{{productId}}
-
-### Optional: direct takedown endpoint
+### 15) Take down product
 POST {{baseUrl}}/products/{{productId}}/takedown

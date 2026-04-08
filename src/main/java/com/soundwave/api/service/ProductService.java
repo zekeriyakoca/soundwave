@@ -4,11 +4,13 @@ import com.soundwave.api.contract.DtoMapper;
 import com.soundwave.api.contract.MoneyDto;
 import com.soundwave.api.contract.request.AddTrackRequest;
 import com.soundwave.api.contract.request.CreateProductRequest;
+import com.soundwave.api.contract.request.ReassignArtistRequest;
 import com.soundwave.api.contract.request.ReorderTracksRequest;
 import com.soundwave.api.contract.request.UpdateProductMetadataRequest;
 import com.soundwave.api.contract.response.PagedResponse;
 import com.soundwave.api.contract.response.ProductDto;
 import com.soundwave.api.contract.response.ProductSummaryDto;
+import com.soundwave.api.contract.response.TrackDto;
 import com.soundwave.domain.dto.DomainErrorCode;
 import com.soundwave.domain.dto.Error;
 import com.soundwave.domain.dto.Result;
@@ -16,6 +18,7 @@ import com.soundwave.domain.entity.Money;
 import com.soundwave.domain.entity.Product;
 import com.soundwave.infrastructure.persistence.repository.ArtistRepository;
 import com.soundwave.infrastructure.persistence.repository.ProductRepository;
+import com.soundwave.infrastructure.persistence.specification.ProductSpecifications;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -24,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -46,8 +50,22 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Result<PagedResponse<ProductSummaryDto>> listProducts(Pageable page) {
-        var response = PagedResponse.from(productRepository.findAllBy(page).map(p -> DtoMapper.toSummaryDto(p)));
+    public Result<List<TrackDto>> getProductTracks(UUID productId) {
+        var product = productRepository.findWithDetailsById(productId);
+        if (product.isEmpty()) {
+            return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
+        }
+        var tracks = product.get().getTracks().stream()
+                .map(DtoMapper::toDto)
+                .toList();
+        return Result.success(tracks);
+    }
+
+    @Transactional(readOnly = true)
+    public Result<PagedResponse<ProductSummaryDto>> searchProducts(Pageable page, UUID artistId) {
+        var spec = ProductSpecifications.hasArtistId(artistId);
+
+        var response = PagedResponse.from(productRepository.findAll(spec, page).map(p -> DtoMapper.toSummaryDto(p)));
         return Result.success(response);
     }
 
@@ -131,9 +149,28 @@ public class ProductService {
 
     @CacheEvict(value = "products", key = "#id")
     @Transactional
-    public Result<ProductDto> deleteProduct(UUID id) {
-        // Trade-off: I didn't want to allow hard delete or enable full soft-delete for this assignment.
-        return takeDownProduct(id);
+    public Result<ProductDto> reassignArtist(UUID id, ReassignArtistRequest request) {
+        var product = productRepository.findById(id);
+        if (product.isEmpty()) {
+            return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Product not found"));
+        }
+        if (!artistRepository.existsById(request.artistId())) {
+            return Result.failure(new Error(DomainErrorCode.NOT_FOUND, "Artist not found"));
+        }
+
+        var existingProduct = product.get();
+        var newArtist = artistRepository.getReferenceById(request.artistId());
+        var changed = existingProduct.reassignArtist(newArtist);
+
+        if (changed && existingProduct.isPublished()) {
+            outboxService.saveProductMetadataUpdated(existingProduct);
+        }
+
+        if (changed) {
+            log.info("Reassigned product {} to artist {}", existingProduct.getId(), request.artistId());
+        }
+
+        return Result.success(DtoMapper.toDto(existingProduct));
     }
 
     @CacheEvict(value = "products", key = "#productId")

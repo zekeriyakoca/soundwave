@@ -163,6 +163,31 @@ class ProductTest {
     }
 
     @Nested
+    class ReassignArtist {
+
+        @Test
+        void returnsTrue_whenDifferentArtist() {
+            var product = draftProductWithSingleTrack();
+            var newArtist = Artist.create("Stevie Nicks", "bio");
+
+            var changed = product.reassignArtist(newArtist);
+
+            assertTrue(changed);
+            assertEquals(newArtist.getId(), product.getArtist().getId());
+        }
+
+        @Test
+        void returnsFalse_whenSameArtist() {
+            var product = draftProductWithSingleTrack();
+            var sameArtist = product.getArtist();
+
+            var changed = product.reassignArtist(sameArtist);
+
+            assertFalse(changed);
+        }
+    }
+
+    @Nested
     class AddTrack {
 
         @Test

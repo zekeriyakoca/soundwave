@@ -3,10 +3,10 @@ package com.soundwave.api.controller;
 import com.soundwave.api.contract.ResultResponseMapper;
 import com.soundwave.api.contract.request.AddTrackRequest;
 import com.soundwave.api.contract.request.CreateProductRequest;
+import com.soundwave.api.contract.request.ReassignArtistRequest;
 import com.soundwave.api.contract.request.ReorderTracksRequest;
 import com.soundwave.api.contract.request.UpdateProductMetadataRequest;
 import com.soundwave.api.service.ProductService;
-import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -31,8 +31,9 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<?> list(
-            @PageableDefault(size = 20, sort = "title") Pageable page) {
-        return ResultResponseMapper.toResponse(productService.listProducts(page));
+            @PageableDefault(size = 20, sort = "title") Pageable page,
+            @RequestParam(required = false) UUID artistId) {
+        return ResultResponseMapper.toResponse(productService.searchProducts(page, artistId));
     }
 
     @PostMapping
@@ -55,11 +56,14 @@ public class ProductController {
         return ResultResponseMapper.toResponse(productService.takeDownProduct(id));
     }
 
-    @Operation(summary = "Deprecated. Use POST /api/v1/products/{id}/takedown instead.")
-    @Deprecated
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable UUID id) {
-        return ResultResponseMapper.toResponse(productService.deleteProduct(id));
+    @PutMapping("/{id}/artist")
+    public ResponseEntity<?> reassignArtist(@PathVariable UUID id, @Valid @RequestBody ReassignArtistRequest request) {
+        return ResultResponseMapper.toResponse(productService.reassignArtist(id, request));
+    }
+
+    @GetMapping("/{id}/tracks")
+    public ResponseEntity<?> listTracks(@PathVariable UUID id) {
+        return ResultResponseMapper.toResponse(productService.getProductTracks(id));
     }
 
     @PostMapping("/{id}/tracks")

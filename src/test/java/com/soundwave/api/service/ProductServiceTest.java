@@ -2,6 +2,7 @@ package com.soundwave.api.service;
 
 import com.soundwave.api.contract.MoneyDto;
 import com.soundwave.api.contract.request.AddTrackRequest;
+import com.soundwave.api.contract.request.ReassignArtistRequest;
 import com.soundwave.api.contract.request.ReorderTracksRequest;
 import com.soundwave.api.contract.request.UpdateProductMetadataRequest;
 import com.soundwave.domain.dto.DomainErrorCode;
@@ -118,6 +119,76 @@ class ProductServiceTest {
             );
 
             var result = productService.updateProductMetadata(product.getId(), request);
+
+            assertTrue(result.isSuccess());
+            verify(outboxService, never()).saveProductMetadataUpdated(product);
+        }
+    }
+
+    @Nested
+    class ReassignArtist {
+
+        @Test
+        void returnsNotFound_whenProductMissing() {
+            var id = UUID.randomUUID();
+            when(productRepository.findById(id)).thenReturn(Optional.empty());
+
+            var result = productService.reassignArtist(id, new ReassignArtistRequest(UUID.randomUUID()));
+
+            assertFalse(result.isSuccess());
+            assertEquals(DomainErrorCode.NOT_FOUND, result.getError().code());
+        }
+
+        @Test
+        void returnsNotFound_whenArtistMissing() {
+            var product = draftProductWithTrack();
+            var newArtistId = UUID.randomUUID();
+            when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+            when(artistRepository.existsById(newArtistId)).thenReturn(false);
+
+            var result = productService.reassignArtist(product.getId(), new ReassignArtistRequest(newArtistId));
+
+            assertFalse(result.isSuccess());
+            assertEquals(DomainErrorCode.NOT_FOUND, result.getError().code());
+        }
+
+        @Test
+        void sendsEvent_whenPublishedProductReassigned() {
+            var product = publishedProduct();
+            var newArtist = Artist.create("Stevie Nicks", "bio");
+            when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+            when(artistRepository.existsById(newArtist.getId())).thenReturn(true);
+            when(artistRepository.getReferenceById(newArtist.getId())).thenReturn(newArtist);
+
+            var result = productService.reassignArtist(product.getId(), new ReassignArtistRequest(newArtist.getId()));
+
+            assertTrue(result.isSuccess());
+            verify(outboxService).saveProductMetadataUpdated(product);
+        }
+
+        @Test
+        void skipsEvent_whenSameArtist() {
+            var product = publishedProduct();
+            var sameArtist = product.getArtist();
+            when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+            when(artistRepository.existsById(sameArtist.getId())).thenReturn(true);
+            when(artistRepository.getReferenceById(sameArtist.getId())).thenReturn(sameArtist);
+
+            var result = productService.reassignArtist(product.getId(), new ReassignArtistRequest(sameArtist.getId()));
+
+            assertTrue(result.isSuccess());
+            verify(outboxService, never()).saveProductMetadataUpdated(product);
+        }
+
+        @Test
+        void skipsEvent_whenDraftProductReassigned() {
+            var product = draftProductWithTrack();
+            var newArtist = Artist.create("Stevie Nicks", "bio");
+            when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+            when(artistRepository.existsById(newArtist.getId())).thenReturn(true);
+            when(artistRepository.getReferenceById(newArtist.getId())).thenReturn(newArtist);
+
+            var result = productService.reassignArtist(product.getId(), new ReassignArtistRequest(newArtist.getId()));
 
             assertTrue(result.isSuccess());
             verify(outboxService, never()).saveProductMetadataUpdated(product);

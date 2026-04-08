@@ -38,7 +38,7 @@ flowchart LR
 - **Inbox pattern in consumers**: each consumer group stores processed IDs in `processed_events` before business logic.
 - **DLT is quarantine, not final sink**: current scope logs + metrics DLT events; recovery worker/replay flow is planned.
 - **Clear event policy**: only meaningful catalog events are published (`ProductPublished`, `ProductTakenDown`, `ProductMetadataUpdated`, `TrackListUpdated`, `ArtistUpdated`).
-- **Soft delete via takedown**: `DELETE /products/{id}` is mapped to takedown. Once published, products are quarantined rather than destroyed so downstream consumers (search index, cache, notification) stay consistent with the events they already received. Hard delete with no compensating event would create silent drift.
+- **No hard delete**: products are taken down via `POST /products/{id}/takedown`, never destroyed. Once published, a product has produced events that downstream consumers (search index, cache, notification) reacted to; hard delete with no compensating event would create silent drift.
 
 Draft products do not produce events.
 
@@ -124,6 +124,27 @@ docker compose up mariadb kafka redis -d
 
 Kafka bootstrap for local app run: `localhost:29092`
 
+## Load Test (k6)
+
+Declarative k6 scenario that drives the full write-side flow (create artist → product → tracks → publish → update → takedown) plus a low-rate "chaos" scenario that fires intentionally invalid requests so 4xx error rates appear on dashboards. Everything goes through the real outbox → Kafka → consumer path, so backlog, publish throughput, latency, and batch-size panels on *Outbox Health* light up.
+
+```bash
+docker compose --profile load run --rm k6
+```
+
+Watch it live on:
+- Grafana → *Soundwave — Outbox Health* — http://localhost:3000
+- Prometheus — http://localhost:9090
+
+To force real publish failures, stop Kafka briefly while the test runs:
+
+```bash
+docker compose stop kafka   # pending + failure rate climb
+docker compose start kafka  # publisher recovers on next tick
+```
+
+Script: [`k6/catalog-load.js`](k6/catalog-load.js). Override base URL for a host-installed k6 via `BASE_URL=http://localhost:8080/api/v1 k6 run k6/catalog-load.js`.
+
 ## Run Tests
 
 ```bash
@@ -155,18 +176,19 @@ Workflow: [.github/workflows/ci.yml](.github/workflows/ci.yml)
 
 ### Products
 
-| Method | Endpoint | Description                             |
-|---|---|-----------------------------------------|
-| POST | `/api/v1/products` | Create product as draft                 |
-| GET | `/api/v1/products/{id}` | Get product details                     |
-| GET | `/api/v1/products` | List products (paginated)               |
-| PUT | `/api/v1/products/{id}` | Update product metadata                 |
-| POST | `/api/v1/products/{id}/publish` | Publish product                         |
-| POST | `/api/v1/products/{id}/takedown` | Take down product                       |
-| DELETE | `/api/v1/products/{id}` | Delete (mapped to takedown temporarily) |
-| POST | `/api/v1/products/{id}/tracks` | Add track                               |
-| DELETE | `/api/v1/products/{id}/tracks/{trackId}` | Remove track                            |
-| PUT | `/api/v1/products/{id}/tracks/order` | Reorder tracks                          |
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/v1/products` | Create product as draft |
+| GET | `/api/v1/products/{id}` | Get product details |
+| GET | `/api/v1/products` | List products (paginated, optional `artistId` filter) |
+| PUT | `/api/v1/products/{id}` | Update product metadata (full replacement) |
+| PUT | `/api/v1/products/{id}/artist` | Reassign product to a different artist |
+| POST | `/api/v1/products/{id}/publish` | Publish product |
+| POST | `/api/v1/products/{id}/takedown` | Take down product |
+| GET | `/api/v1/products/{id}/tracks` | List tracks for a product |
+| POST | `/api/v1/products/{id}/tracks` | Add track |
+| DELETE | `/api/v1/products/{id}/tracks/{trackId}` | Remove track |
+| PUT | `/api/v1/products/{id}/tracks/order` | Reorder tracks |
 
 ### Artists
 

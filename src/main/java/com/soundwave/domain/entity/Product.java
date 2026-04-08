@@ -105,6 +105,15 @@ public class Product extends BaseEntity {
         return status == ProductStatus.PUBLISHED;
     }
 
+    public boolean reassignArtist(Artist newArtist) {
+        Objects.requireNonNull(newArtist, "Artist cannot be null");
+        if (this.artist.getId().equals(newArtist.getId())) {
+            return false;
+        }
+        this.artist = newArtist;
+        return true;
+    }
+
     public void addTrack(String title, int durationMs, int trackNumber, String isrc) {
         var numberTaken = tracks.stream()
                 .anyMatch(t -> t.getTrackNumber() == trackNumber);
