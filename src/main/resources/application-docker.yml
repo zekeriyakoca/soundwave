@@ -3,6 +3,10 @@ logging:
     com.soundwave: INFO
     org.springframework.web: INFO
 
+seq:
+  gelf:
+    host: ${SEQ_GELF_HOST:localhost}
+
 spring:
   datasource:
     url: jdbc:mariadb://mariadb:3306/soundwave

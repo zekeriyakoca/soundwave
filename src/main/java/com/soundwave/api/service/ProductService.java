@@ -126,6 +126,7 @@ public class ProductService {
         }
         var existingProduct = product.get();
         existingProduct.publish();
+
         outboxService.saveProductPublished(existingProduct);
 
         log.info("Published product {}", existingProduct.getId());

@@ -32,6 +32,7 @@ dependencies {
 
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8")
 	implementation("net.logstash.logback:logstash-logback-encoder:7.4")
+	implementation("biz.paluch.logging:logstash-gelf:1.15.1")
 	implementation("io.micrometer:micrometer-registry-prometheus")
 
 	// Testing

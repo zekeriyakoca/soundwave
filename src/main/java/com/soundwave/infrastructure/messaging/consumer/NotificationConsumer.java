@@ -17,7 +17,7 @@ public class NotificationConsumer extends IdempotentConsumer {
         super(repo, mapper);
     }
 
-    @KafkaListener(topics = "catalog.product.events", groupId = "notification-group")
+    @KafkaListener(topics = "catalog.product.events", groupId = "notification-group", concurrency = "5")
     public void listen(@Payload String payload) {
         handle(payload);
     }

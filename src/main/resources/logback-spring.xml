@@ -2,6 +2,7 @@
 <configuration>
     <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="soundwave"/>
     <springProperty scope="context" name="activeProfile" source="spring.profiles.active" defaultValue="default"/>
+    <springProperty scope="context" name="seqGelfHost" source="seq.gelf.host" defaultValue="localhost"/>
 
     <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
@@ -11,7 +12,20 @@
         </encoder>
     </appender>
 
+    <appender name="GELF" class="biz.paluch.logging.gelf.logback.GelfLogbackAppender">
+        <host>udp:${seqGelfHost}</host>
+        <port>12201</port>
+        <version>1.1</version>
+        <facility>${appName}</facility>
+        <extractStackTrace>true</extractStackTrace>
+        <filterStackTrace>false</filterStackTrace>
+        <includeFullMdc>true</includeFullMdc>
+        <maximumMessageSize>8192</maximumMessageSize>
+        <additionalFields>service=${appName},environment=${activeProfile}</additionalFields>
+    </appender>
+
     <root level="INFO">
         <appender-ref ref="JSON_CONSOLE"/>
+        <appender-ref ref="GELF"/>
     </root>
 </configuration>

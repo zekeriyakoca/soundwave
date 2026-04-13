@@ -17,7 +17,7 @@ public class SearchIndexConsumer extends IdempotentConsumer {
         super(repo, mapper);
     }
 
-    @KafkaListener(topics = "catalog.product.events", groupId = "search-index-group")
+    @KafkaListener(topics = "catalog.product.events", groupId = "search-index-group", concurrency = "5")
     public void listen(@Payload String payload) {
         handle(payload);
     }

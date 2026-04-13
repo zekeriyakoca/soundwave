@@ -21,7 +21,7 @@ public class CacheInvalidationConsumer extends IdempotentConsumer {
         this.cacheManager = cacheManager;
     }
 
-    @KafkaListener(topics = "catalog.product.events", groupId = "cache-invalidation-group")
+    @KafkaListener(topics = "catalog.product.events", groupId = "cache-invalidation-group", concurrency = "5")
     public void listenProducts(@Payload String payload) {
         handle(payload);
     }

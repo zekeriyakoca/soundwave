@@ -1,5 +1,6 @@
 package com.soundwave.api.service;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.soundwave.domain.entity.Artist;
 import com.soundwave.domain.entity.OutboxEvent;
 import com.soundwave.domain.entity.Product;

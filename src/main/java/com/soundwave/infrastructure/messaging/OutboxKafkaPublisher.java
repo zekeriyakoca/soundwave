@@ -46,7 +46,6 @@ public class OutboxKafkaPublisher {
     private Counter publishedCounter;
     private Counter publishFailedCounter;
     private Timer publishDuration;
-    private DistributionSummary publishBatchSize;
 
     @PostConstruct
     void registerMetrics() {
@@ -64,9 +63,6 @@ public class OutboxKafkaPublisher {
                 .register(meterRegistry);
         publishDuration = Timer.builder("outbox.publish.duration")
                 .description("Latency of a single outbox publish call to Kafka")
-                .register(meterRegistry);
-        publishBatchSize = DistributionSummary.builder("outbox.publish.batch.size")
-                .description("Number of events processed per publisher flush")
                 .register(meterRegistry);
     }
 
@@ -87,7 +83,6 @@ public class OutboxKafkaPublisher {
         }
         try {
             var batch = outboxEventRepository.findPending(PageRequest.ofSize(BATCH_SIZE));
-            publishBatchSize.record(batch.size());
             publishAll(batch);
         } finally {
             refreshMetrics();

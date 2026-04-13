@@ -53,7 +53,7 @@ Details: [Event Contract Governance](docs/event-contract-governance.md)
 
 ## Observability
 
-- **Logging**: JSON logs via Logstash encoder
+- **Logging**: JSON logs via Logstash encoder; same events also shipped to a local Seq instance over GELF (UDP) through a `datalust/seq-input-gelf` sidecar — searchable at http://localhost:8090
 - **Correlation**: `X-Request-Id` and `X-Correlation-Id` propagated through MDC
 - **Metrics**:
   - `outbox.events.pending` (gauge — current backlog)
@@ -61,7 +61,6 @@ Details: [Event Contract Governance](docs/event-contract-governance.md)
   - `outbox.events.published` (counter — throughput)
   - `outbox.events.publish.failures` (counter)
   - `outbox.publish.duration` (timer — per-event publish latency)
-  - `outbox.publish.batch.size` (distribution — events per flush)
   - `outbox.dlt.events` (counter)
 - **Monitoring**: Prometheus alert rules + Grafana datasource and dashboard provisioning
 - **Dashboard**: *Soundwave — Outbox Health* (provisioned from [`monitoring/grafana/dashboards/outbox-health.json`](monitoring/grafana/dashboards/outbox-health.json)) — backlog, throughput, publish latency, batch size, DLT rate. Available at http://localhost:3000 after `docker compose up`.
@@ -109,17 +108,20 @@ Metrics/dashboard plan: [Metrics and Grafana Plan](docs/metrics-and-grafana-plan
 docker compose up --build
 ```
 
-| Service | URL |
-|---|---|
-| API | http://localhost:8080 |
-| Swagger UI | http://localhost:8080/swagger-ui.html |
-| Prometheus | http://localhost:9090 |
-| Grafana | http://localhost:3000 (`admin` / `admin`) |
+Tail the app logs with `docker compose logs -f app`. Stop everything with `docker compose down`.
+
+| Service    | URL                                                    |
+|------------|--------------------------------------------------------|
+| API        | http://localhost:8080                                  |
+| Swagger UI | http://localhost:8080/swagger-ui.html                  |
+| Prometheus | http://localhost:9090                                  |
+| Grafana    | http://localhost:3000 (`admin` / `admin`)              |
+| Seq (logs) | http://localhost:8090 (structured log search)          |
 
 ### Infra only (run app from IDE)
 
 ```bash
-docker compose up mariadb kafka redis prometheus grafana -d
+docker compose up -d mariadb kafka redis seq seq-input-gelf prometheus grafana
 ```
 
 Kafka bootstrap for local app run: `localhost:29092`

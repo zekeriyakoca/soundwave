@@ -14,7 +14,7 @@ First-response guide for outbox publishing health.
 1. `GET /actuator/health`
 2. `GET /actuator/metrics/outbox.events.pending`
 3. `GET /actuator/metrics/outbox.events.failed`
-4. Check logs by `eventId` / `eventType`
+4. Search structured logs in Seq (http://localhost:8090) by `eventId`, `eventType`, or `correlation_id`
 
 ## Recovery Hints
 - **Pending rising**

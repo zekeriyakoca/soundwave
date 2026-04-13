@@ -36,7 +36,7 @@ public class KafkaConfig {
     @Bean
     public NewTopic productEventsDltTopic() {
         return TopicBuilder.name(PRODUCT_EVENTS_TOPIC + ".dlt")
-                .partitions(5)
+                .partitions(1)
                 .replicas(1)
                 .build();
     }

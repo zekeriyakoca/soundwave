@@ -6,7 +6,6 @@
 - `outbox.events.published` (`outbox_events_published_total`) — counter, throughput
 - `outbox.events.publish.failures` (`outbox_events_publish_failures_total`) — counter, transient + permanent
 - `outbox.publish.duration` (`outbox_publish_duration_seconds_*`) — timer, per-event Kafka publish latency
-- `outbox.publish.batch.size` (`outbox_publish_batch_size_*`) — distribution, batch size per flush
 - `outbox.dlt.events` (`outbox_dlt_events_total`)
 - `http.server.requests` (`http_server_requests_seconds_*`)
 - Kafka consumer lag — **not emitted by this app or by Kafka itself**. Requires deploying a separate exporter (e.g. `kafka_exporter` → `kafka_consumergroup_lag`). Not provisioned in this scope.

@@ -34,6 +34,15 @@ Conscious shortcuts in the current scope. Each one is something to revisit befor
 - **Risk:** Callers that expect "really gone" semantics will be surprised.
 - **Production fix:** If a true delete is ever needed, add a `ProductDeleted` event with consumer-side compensation rather than a silent DB delete.
 
+## Observability
+
+### Seq runs as a local dev convenience, not production logging
+- **Where:** `docker-compose.yml` (`seq`, `seq-input-gelf`), `logback-spring.xml` (`GELF` appender)
+- **Decision:** Logs are shipped to a local Seq instance via GELF UDP through a sidecar. Console JSON logging is kept in parallel.
+- **Why:** Gives a searchable structured-log UI for local development at zero cost. GELF UDP is fire-and-forget so the appender never blocks the app, and if Seq is absent (e.g. IDE run) the packets are silently dropped.
+- **Risk:** UDP loses events under load; Seq `ACCEPT_EULA=Y` is the free single-user tier, not a production license; the sidecar adds one more container to maintain.
+- **Production fix:** Replace with a managed log pipeline (OTLP → your log backend, or Fluent Bit sidecar → cloud log store). Remove the GELF appender, keep the JSON console encoder as the single source of truth.
+
 ## API
 
 ### Metadata update is `PUT`, artist reassign is a separate `PUT`

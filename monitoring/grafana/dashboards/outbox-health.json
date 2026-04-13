@@ -264,45 +264,6 @@
     {
       "id": 8,
       "type": "timeseries",
-      "title": "Publisher batch size",
-      "description": "outbox.publish.batch.size — events processed per flush. Mean = rate(sum) / rate(count). Max from Micrometer sliding window.",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "expr": "rate(outbox_publish_batch_size_sum[1m]) / clamp_min(rate(outbox_publish_batch_size_count[1m]), 1e-9)",
-          "refId": "A",
-          "legendFormat": "mean"
-        },
-        {
-          "expr": "outbox_publish_batch_size_max",
-          "refId": "B",
-          "legendFormat": "max"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "short",
-          "decimals": 1
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }
-      }
-    },
-    {
-      "id": 9,
-      "type": "timeseries",
       "title": "DLT events rate",
       "description": "outbox.dlt.events — per-second rate of events routed to dead-letter topics.",
       "gridPos": { "h": 6, "w": 24, "x": 0, "y": 20 },
