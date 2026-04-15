@@ -9,7 +9,7 @@
 - `outbox.publish.batch.size` (`outbox_publish_batch_size_*`) — distribution, batch size per flush
 - `outbox.dlt.events` (`outbox_dlt_events_total`)
 - `http.server.requests` (`http_server_requests_seconds_*`)
-- Kafka consumer lag (exporter required in production)
+- Kafka consumer lag — **not emitted by this app or by Kafka itself**. Requires deploying a separate exporter (e.g. `kafka_exporter` → `kafka_consumergroup_lag`). Not provisioned in this scope.
 
 ## Recommended Dashboard Panels
 1. **Outbox Pending (gauge + 15m trend)**
@@ -22,8 +22,7 @@
    - Query: `sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))`
 5. **P95 API Latency**
    - Query: `histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket[5m])))`
-6. **Kafka Consumer Lag**
-   - Query depends on lag exporter metric name (for example `kafka_consumergroup_lag`)
+6. **Kafka Consumer Lag** — deferred. Requires a Kafka lag exporter, which is not deployed. See Scope Note.
 
 ## Alert Baseline
 - Pending high: `outbox_events_pending > 100 for 5m`

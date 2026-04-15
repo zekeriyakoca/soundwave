@@ -25,7 +25,9 @@ public class RedisConfig {
         var defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(cacheTtl)
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(GenericJacksonJsonRedisSerializer.builder().build()))
+                        .fromSerializer(GenericJacksonJsonRedisSerializer.builder()
+                                .enableUnsafeDefaultTyping()
+                                .build()))
                 .disableCachingNullValues();
 
         return RedisCacheManager.builder(connectionFactory)

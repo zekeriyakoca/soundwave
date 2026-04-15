@@ -119,7 +119,7 @@ docker compose up --build
 ### Infra only (run app from IDE)
 
 ```bash
-docker compose up mariadb kafka redis -d
+docker compose up mariadb kafka redis prometheus grafana -d
 ```
 
 Kafka bootstrap for local app run: `localhost:29092`

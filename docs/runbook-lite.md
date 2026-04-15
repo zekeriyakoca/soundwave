@@ -4,16 +4,11 @@
 First-response guide for outbox publishing health.
 
 ## Alerts
-- `OutboxPendingBacklogHigh`
-- `OutboxFailedEventsDetected`
-- `OutboxDltEventsDetected`
-
-## Owner Chain
-| Alert | Owner | First Action | Escalation |
+| Alert | Condition | Severity | First Action |
 |---|---|---|---|
-| Pending backlog | Backend on-call | Check broker reachability + pending trend | Platform on-call |
-| Failed rows | Backend on-call | Inspect `failure_reason`, classify data vs infra | Domain owner |
-| DLT growth | Backend on-call | Inspect sample payload + cause | Consumer owner |
+| `OutboxPendingBacklogHigh` | `outbox_events_pending > 100` for 5m | warning | Inspect the oldest pending row — ordered publish halts on the first retryable failure. Verify broker/topic reachability only if no single row is stuck. |
+| `OutboxFailedEventsDetected` | `outbox_events_failed > 0` for 2m | critical | Read `failure_reason` on failed rows; classify data (payload/mapping) vs infra (serialization/config) before deciding replay. |
+| `OutboxDltEventsDetected` | `increase(outbox_dlt_events_total[10m]) > 0` for 1m | warning | Pull a DLT record sample and read the `kafka_exception*` headers to classify the failure: non-retryable (schema/validation mismatch, unknown event type) vs retries-exhausted under transient broker/consumer instability. |
 
 ## Quick Checks
 1. `GET /actuator/health`

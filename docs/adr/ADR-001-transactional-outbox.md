@@ -19,6 +19,7 @@
 ## Consequences
 - Consistency model is simple and robust for the current scope.
 - Multi-node duplicate publish is still possible without DB-level claiming.
+- Transient failure halts the whole batch, not just the affected aggregate.
 
 ## Success Criteria
 - Committed publish/takedown actions always produce an outbox row.

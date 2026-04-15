@@ -2,29 +2,28 @@
 
 ## Context
 - Read-heavy endpoints (`GET /products/{id}`, `GET /artists/{id}`) are cached with Spring `@Cacheable` backed by Redis.
-- Local `@CacheEvict` on the writing service method works for the writing instance only. With multiple app instances, other nodes still serve stale data from their own cache view of Redis after a write that bypassed them.
-- Cache must stay consistent with the catalog without coupling reads to the database on every request.
+- Every write method on `ProductService`/`ArtistService` already carries `@CacheEvict` with the correct key, so the cache stays consistent for today's single-service write path.
+- Still, cache invalidation tied only to service-layer writes is fragile if mutations ever come from elsewhere (future write-side split, background job, external producer).
 
 ## Decision
-- Treat the cache as a downstream consumer of catalog events, not as a side concern of the write path.
-- `CacheInvalidationConsumer` listens to catalog topics and evicts the relevant cache entry on:
-  `ProductMetadataUpdated`, `TrackListUpdated`, `ProductPublished`, `ProductTakenDown`, `ArtistUpdated`.
-- Local `@CacheEvict` is kept for the writing instance as a fast path; the event-driven evict is the source of truth across instances.
-- The consumer is idempotent (ADR-002), so duplicate evicts are harmless.
+- Keep `@CacheEvict` as the primary mechanism. It is enough for the current write paths.
+- Add `CacheInvalidationConsumer` as a second channel that evicts the same keys from catalog events (`ProductMetadataUpdated`, `TrackListUpdated`, `ProductPublished`, `ProductTakenDown`, `ArtistUpdated`).
+- The consumer is idempotent (ADR-002), so the redundant evict is harmless.
+
+## Why include it at all
+- Showcases a meaningful infra consumer alongside the side-effect ones (search index, notification).
+- Forward-compatible: if writes ever move out of the service layer, cache consistency already has an event-driven path.
 
 ## Alternatives Rejected
-- **Local `@CacheEvict` only**
-  - Rejected: does not invalidate other instances' Redis access patterns or cached values written by other nodes.
 - **TTL-only invalidation**
-  - Rejected: stale window is unbounded by request timing; not acceptable for catalog reads after a publish/takedown.
+  - Rejected: stale window is unbounded by request timing; not acceptable after a publish/takedown.
 - **Synchronous Redis pub/sub from the write path**
   - Rejected: couples the write transaction to Redis availability and bypasses the existing outbox/event pipeline.
 
 ## Consequences
-- Cache consistency reuses the same delivery and idempotency guarantees as the rest of the system.
-- A short eventual-consistency window exists between commit and consumer evict; acceptable for a catalog read model.
-- Adds one more consumer group to operate, but no new infrastructure.
+- Each write evicts the cache twice (annotation + consumer). Idempotent, but extra work.
+- One more consumer group to operate. No new infrastructure.
 
 ## Success Criteria
-- After a published product is updated on instance A, a read on instance B reflects the change without waiting for TTL.
+- After a catalog write, subsequent reads reflect the change without waiting for TTL.
 - Replaying the same event does not cause incorrect cache state.
